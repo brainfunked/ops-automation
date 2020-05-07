@@ -11,12 +11,16 @@
         name: python3-tripleoclient
         state: latest
       when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
-      tags: rhosp
+      tags:
+        - rhosp
+        - never
 
     - name: Install ceph-ansible
       dnf:
         name: ceph-ansible
         state: latest
       when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
-      tags: rhcs
+      tags:
+        - rhcs
+        - never
 
