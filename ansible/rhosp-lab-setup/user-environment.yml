@@ -1,0 +1,110 @@
+---
+#
+# Copies customised configuration for tmux, vim and bash
+#
+
+- hosts: cloud
+  remote_user: root
+  tasks:
+    - name: Set bash to vi mode
+      lineinfile:
+        path: /root/.bashrc
+        state: present
+        insertafter: EOF
+        line: set -o vi
+
+    # Manually do this because root's configuration file has other stuff populated
+    - name: Set bash to vi mode for new users
+      lineinfile:
+        path: /etc/skel/.bashrc
+        state: present
+        insertafter: EOF
+        line: set -o vi
+
+    - name: Set $EDITOR and $TERM variables for tmux
+      blockinfile:
+        path: /root/.bashrc
+        state: present
+        insertafter: EOF
+        block: |
+          export EDITOR=vim
+          export TERM=xterm-256color
+
+    # Manually do this because root's configuration file has other stuff populated
+    - name: Set $EDITOR and $TERM variables for tmux for new users
+      blockinfile:
+        path: /etc/skel/.bashrc
+        state: present
+        insertafter: EOF
+        block: |
+          export EDITOR=vim
+          export TERM=xterm-256color
+
+    - name: Install vim plugins
+      unarchive:
+        src: dotfiles/vim-plugins.tar.gz
+        dest: /root/
+        list_files: true
+        owner: root
+
+    - name: Install vim configuration
+      copy:
+        src: dotfiles/.vimrc
+        dest: /root/.vimrc
+
+    - name: Install vim plugins for new users
+      unarchive:
+        src: dotfiles/vim-plugins.tar.gz
+        dest: /etc/skel/
+        list_files: true
+        owner: root
+
+    - name: Install vim configuration
+      copy:
+        src: dotfiles/.vimrc
+        dest: /etc/skel/.vimrc
+
+    - name: Create .ssh directory for new users
+      file:
+        path: /etc/skel/.ssh
+        state: directory
+        mode: '0700'
+
+    - name: Copy over ssh authorized_keys for new users
+      copy:
+        src: /root/.ssh/authorized_keys
+        dest: /etc/skel/.ssh/
+        remote_src: yes
+        mode: '0600'
+
+    # Would both the following be better served with checking the tmux version?
+    - name: tmux >2.1 configuration
+      block:
+        - name: Install tmux configuration
+          unarchive:
+            src: dotfiles/tmux-configuration.tar.gz
+            dest: /root/
+            list_files: true
+            owner: root
+
+        - name: Install tmux configuration for new users
+          unarchive:
+            src: dotfiles/tmux-configuration.tar.gz
+            dest: /etc/skel/
+            list_files: true
+            owner: root
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+    - name: tmux 1.8 configuration
+      block:
+        - name: Copy tmux configuration file
+          copy:
+            src: dotfiles/.tmux-1.8.conf
+            dest: /root/.tmux.conf
+
+        - name: Copy tmux 1.8 configuration for new users
+          copy:
+            src: dotfiles/.tmux.conf
+            dest: /etc/skel/.tmux.conf
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+
