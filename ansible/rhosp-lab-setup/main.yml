@@ -26,3 +26,5 @@
   #ignore_errors: true
   tags:
     - always
+
+- import_playbook: clean-interfaces.yml

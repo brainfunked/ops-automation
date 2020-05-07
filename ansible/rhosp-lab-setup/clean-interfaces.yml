@@ -1,0 +1,14 @@
+---
+#
+# Runs the clean-interfaces script to remove the pre-existing network
+# configuration so as not to interfere with OSP deployments
+#
+
+- hosts: cloud
+  remote_user: root
+  tasks:
+    - name: Disable pre-existing network interfaces
+      command: /root/clean-interfaces.sh --disable
+      tags:
+        - rhosp
+        - never
