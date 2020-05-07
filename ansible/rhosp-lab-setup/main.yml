@@ -1,0 +1,28 @@
+---
+# Make sure that the inventory is populated with the undercloud and cloud hosts
+# Run the playbook with the tag rhosp if you need subscription management and
+# ospd specific repository configuration for the lab machines.
+- import_playbook: rh-subscription.yml
+  #ignore_errors: true
+  tags:
+    - rhosp
+    - never
+
+- import_playbook: disable-epel.yml
+  tags:
+    - rhosp
+    - never
+
+- import_playbook: packages.yml
+  tags:
+    - always
+
+- import_playbook: package-update-all.yml
+  tags:
+    - system-update
+    - never
+
+- import_playbook: user-environment.yml
+  #ignore_errors: true
+  tags:
+    - always
