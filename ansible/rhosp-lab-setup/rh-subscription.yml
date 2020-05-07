@@ -23,7 +23,8 @@
           username: "{{ rhsm_user }}"
           password: "{{ rhsm_password }}"
           force_register: yes
-          pool_ids: 8a85f98460bfb0470160c2fac89136e7
+          pool_ids: "{{ pool_id }}"
+          release: "8.1"
 
       - name: Disable all RHSM repositories
         rhsm_repository:
@@ -33,9 +34,9 @@
       - name: Enable repositories needed for OpenStack
         rhsm_repository:
           name:
-            - rhel-8-for-x86_64-baseos-rpms
+            - rhel-8-for-x86_64-baseos-eus-rpms
             - rhel-8-for-x86_64-appstream-rpms
-            - rhel-8-for-x86_64-highavailability-rpms
+            - rhel-8-for-x86_64-highavailability-eus-rpms
             - ansible-2.8-for-rhel-8-x86_64-rpms
             - openstack-16-for-rhel-8-x86_64-rpms
             - fast-datapath-for-rhel-8-x86_64-rpms
