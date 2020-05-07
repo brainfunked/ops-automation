@@ -1,0 +1,27 @@
+---
+#
+# Does an update of all packages
+#
+
+- hosts: cloud
+  remote_user: root
+  tasks:
+    - name: Full system package update, possibly to new release
+      block:
+        - name: dnf update all packages except kernel
+          dnf:
+            name: '*'
+            state: latest
+            exclude: kernel*
+          when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+        - name: yum update all packages except kernel
+          yum:
+            name: '*'
+            state: latest
+            exclude: kernel*
+          when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+      tags:
+        - system-update
+        - never
+

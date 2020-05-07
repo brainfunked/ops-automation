@@ -1,0 +1,47 @@
+---
+#
+# Enables the subscription manager repositories
+#
+
+- hosts: undercloud
+  remote_user: root
+  vars_prompt:
+    - name: rhsm_user
+      prompt: "RHSM username: "
+      private: no
+
+    - name: rhsm_password
+      prompt: "RHSM password: "
+      private: yes
+
+  tasks:
+  - name: RHSM configuration
+    block:
+      - name: Register via subscription-manager
+        redhat_subscription:
+          state: present
+          username: "{{ rhsm_user }}"
+          password: "{{ rhsm_password }}"
+          force_register: yes
+          pool_ids: 8a85f98460bfb0470160c2fac89136e7
+
+      - name: Disable all RHSM repositories
+        rhsm_repository:
+          name: '*'
+          state: disabled
+
+      - name: Enable repositories needed for OpenStack
+        rhsm_repository:
+          name:
+            - rhel-8-for-x86_64-baseos-rpms
+            - rhel-8-for-x86_64-appstream-rpms
+            - rhel-8-for-x86_64-highavailability-rpms
+            - ansible-2.8-for-rhel-8-x86_64-rpms
+            - openstack-16-for-rhel-8-x86_64-rpms
+            - fast-datapath-for-rhel-8-x86_64-rpms
+          state: enabled
+    tags:
+      - rhosp
+      - never
+    when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8" and pool_id is defined
+

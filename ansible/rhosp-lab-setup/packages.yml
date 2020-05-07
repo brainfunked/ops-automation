@@ -1,0 +1,33 @@
+---
+#
+# Installs basic packages and upgrades all except kernel
+#
+
+- hosts: cloud
+  remote_user: root
+  tasks:
+    - name: dnf install vim-enhanced, tmux and wget packages
+      dnf:
+        name:
+          - vim-enhanced
+          - tmux
+          - wget
+          - git
+          - tar
+          - bash-completion
+          - bind-utils
+        state: present
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+    - name: yum install vim-enhanced, tmux and wget packages
+      yum:
+        name:
+          - vim-enhanced
+          - tmux
+          - wget
+          - git
+          - tar
+          - bash-completion
+          - bind-utils
+        state: present
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
