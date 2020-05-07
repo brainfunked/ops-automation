@@ -1,0 +1,13 @@
+caption always # activates window caption
+caption string '%{= wk}[ %{k}%H %{k}][%= %{= wk}%?%-Lw%?%{r}(%{r}%n*%f%t%?(%u)%?%{r})%{k}%?%+Lw%?%?%= %{k}][%{b} %d/%m %{k}%c %{k}]' # good looking window bar
+encoding UTF-8
+termcapinfo xterm* ti@:te@ # scrolling
+startup_message off
+
+# Fix residual editor text
+altscreen on
+
+# Colours
+term xterm-256color
+attrcolor b ".I"
+defbce on
