@@ -21,3 +21,5 @@
   tags: always
 
 - import_playbook: clean-interfaces.yml
+
+- import_playbook: stack-user.yml

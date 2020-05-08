@@ -1,0 +1,36 @@
+---
+#
+# Creates the stack user and copies over undercloud configuration
+#
+
+- hosts: undercloud
+  remote_user: root
+  tasks:
+    - name: Stack user on the undercloude node
+      block:
+        - name: Create the stack user
+          user:
+            name: stack
+
+        - name: Add sudoers file for the stack user
+          copy:
+            src: files/sudoers_stack
+            dest: /etc/sudoers.d/stack
+            mode: '0440'
+            owner: root
+            group: root
+
+        - name: Create ansible directories for the stack user
+          file:
+            path: "/home/stack/{{ item }}"
+            state: directory
+            owner: stack
+            group: stack
+          with_items:
+            - images
+            - templates
+            - builddir
+      tags:
+        - rhosp
+        - never
+
