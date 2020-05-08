@@ -8,7 +8,7 @@
   remote_user: root
   tasks:
     - name: Disable pre-existing network interfaces
-      command: /root/clean-interfaces.sh --disable
+      command: /root/clean-interfaces.sh --nuke
       tags:
         - rhosp
         - never
