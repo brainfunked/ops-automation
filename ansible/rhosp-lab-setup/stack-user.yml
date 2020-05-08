@@ -30,6 +30,28 @@
             - images
             - templates
             - builddir
+
+        - name: Copy a default configured undercloud.conf
+          copy:
+            src: files/undercloud.conf
+            dest: "/home/stack/"
+            owner: stack
+            group: stack
+
+        - name: Copy default registry configuration, EDIT MANUALLY
+          # TODO: template it out and fill in the RHN username/password?
+          copy:
+            src: files/containers-prepare-parameter.yaml
+            dest: "/home/stack/"
+            owner: stack
+            group: stack
+
+        - name: Copy custom undercloud parameters file
+          copy:
+            src: files/custom-undercloud-parameter.yaml
+            dest: "/home/stack/templates/"
+            owner: stack
+            group: stack
       tags:
         - rhosp
         - never
