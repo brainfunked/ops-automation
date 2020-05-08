@@ -6,7 +6,6 @@
 #   while locked to RHEL 8.1, use the system-update tag.
 
 - import_playbook: rh-subscription.yml
-  when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8" and pool_id is defined
 
 - import_playbook: disable-epel.yml
 
@@ -16,7 +15,6 @@
 - import_playbook: package-update-all.yml
 
 - import_playbook: rhosp-packages.yml
-  when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
 
 - import_playbook: user-environment.yml
   #ignore_errors: true
