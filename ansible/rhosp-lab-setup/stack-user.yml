@@ -52,6 +52,14 @@
             dest: "/home/stack/templates/"
             owner: stack
             group: stack
+
+        - name: Copy over the script to gather disk serial numbers for overcloud nodes
+          copy:
+            src: files/extract_serial_for_sda.rb
+            dest: "/home/stack"
+            mode: '0750'
+            owner: stack
+            group: stack
       tags:
         - rhosp
         - never
