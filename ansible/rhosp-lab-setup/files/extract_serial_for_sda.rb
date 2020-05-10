@@ -16,5 +16,8 @@ end
 nodes.each do |n, u|
   json = JSON.parse(`openstack baremetal introspection data save #{n}`)
   disk = json["inventory"]["disks"].select { |d| d["name"] == "/dev/sda" }
-  puts "openstack baremetal node set --property root_device='{\"serial\":\"#{disk[0]["serial"]}\"}' #{u}"
+  cmd = "openstack baremetal node set --property root_device='{\"serial\":\"#{disk[0]["serial"]}\"}' #{u}"
+  puts "Running: #{cmd}"
+  exit_code = system cmd
+  puts "\tSucceeded: #{exit_code}"
 end
