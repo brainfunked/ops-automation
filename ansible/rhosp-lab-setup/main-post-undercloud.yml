@@ -1,0 +1,9 @@
+---
+# Make sure main.yml has been run
+# Run `openstack undercloud install` successfully
+# Make sure instackenv.json has been created under files/
+# ASSUMES RHEL 8 and does NOT check for it!
+
+- import_playbook: post-undercloud-setup.yml
+
+- import_playbook: post-undercloud-setup-as-stack.yml

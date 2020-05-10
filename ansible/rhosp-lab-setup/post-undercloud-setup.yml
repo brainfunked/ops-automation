@@ -1,0 +1,27 @@
+---
+#
+# Automation of steps after setting up the undercloud. Assumes RHEL8
+#
+
+- hosts: undercloud
+  remote_user: root
+  tasks:
+    - name: Install director images packages
+      dnf:
+        name:
+          - rhosp-director-images
+          - rhosp-director-images-ipa
+        state: present
+
+    - name: Restart httpd for the container registry
+      systemd:
+        name: httpd
+        state: restarted
+
+    - name: Copy over instackenv.json
+      copy:
+        src: files/instackenv.json
+        dest: "/home/stack"
+        owner: stack
+        group: stack
+

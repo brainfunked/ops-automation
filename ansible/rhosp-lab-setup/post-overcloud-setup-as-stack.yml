@@ -1,0 +1,36 @@
+---
+#
+# Steps required to be carried out as the stack user to deploy the overcloud
+#
+
+- hosts: undercloud
+  remote_user: stack
+  tasks:
+    - name: Copy over the undercloud-passwords.conf file
+      copy:
+        src: /home/stack/builddir/undercloud-passwords.conf
+        dest: /home/stack/
+        remote_src: yes
+
+    - name: Extract director images
+      shell: tar -xvf /usr/share/rhosp-director-images/*-latest-16.0.tar
+        chdir: /home/stack/images
+      become: yes
+
+    - name: Upload images for overcloud
+      shell: source /home/stack/stackrc && openstack overcloud image upload --image-path /home/stack/images
+
+    - name: Validate instackenv.json
+      shell: source /home/stack/stackrc && openstack overcloud node import --validate-only /home/stack/instackenv.json
+
+    - name: Import instackenv.json
+      shell: source /home/stack/stackrc && openstack overcloud node import /home/stack/instackenv.json
+
+    - name: List imported baremetal nodes
+      shell: source /home/stack/stackrc && openstack baremetal node list
+
+    - name: Introspect nodes
+      shell: source /home/stack/stackrc && openstack baremetal node introspect --all-manageable --provide
+
+    - name: Set root device for the nodes to boot from
+      shell: source /home/stack/stackrc && /home/stack/extract_serial_for_sda.rb
