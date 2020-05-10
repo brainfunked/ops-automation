@@ -13,9 +13,7 @@
         remote_src: yes
 
     - name: Extract director images
-      shell: tar -xvf /usr/share/rhosp-director-images/*-latest-16.0.tar
-        chdir: /home/stack/images
-      become: yes
+      shell: tar -C /home/stack/images -xvf /usr/share/rhosp-director-images/*-latest-16.0.tar
 
     - name: Upload images for overcloud
       shell: source /home/stack/stackrc && openstack overcloud image upload --image-path /home/stack/images
