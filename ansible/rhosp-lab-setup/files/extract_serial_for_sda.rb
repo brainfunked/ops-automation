@@ -14,10 +14,12 @@ node_ids.each do |n|
 end
 
 nodes.each do |n, u|
+  puts "Node #{n}: #{u}"
   json = JSON.parse(`openstack baremetal introspection data save #{n}`)
   disk = json["inventory"]["disks"].select { |d| d["name"] == "/dev/sda" }
   cmd = "openstack baremetal node set --property root_device='{\"serial\":\"#{disk[0]["serial"]}\"}' #{u}"
-  puts "Running: #{cmd}"
+  puts "\tRunning: #{cmd}"
   exit_code = system cmd
   puts "\tSucceeded: #{exit_code}"
+  puts `openstack baremetal node show -f yaml --fields properties --fit-width #{u}`
 end
