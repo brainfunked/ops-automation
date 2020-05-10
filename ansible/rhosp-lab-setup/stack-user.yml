@@ -48,7 +48,7 @@
 
         - name: Copy custom undercloud parameters file
           copy:
-            src: files/custom-undercloud-parameter.yaml
+            src: files/custom-undercloud-params.yaml
             dest: "/home/stack/templates/"
             owner: stack
             group: stack
