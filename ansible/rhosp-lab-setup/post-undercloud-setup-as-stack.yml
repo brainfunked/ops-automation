@@ -19,22 +19,22 @@
       shell: source /home/stack/stackrc && openstack overcloud image upload --image-path /home/stack/images
 
     - name: List uploaded images
-      shell: source /home/stack/stackrc && openstack image list
+      shell: source /home/stack/stackrc && openstack image list -f yaml
       register: image_list
 
-    - debug: msg=image_list.stdout
+    - debug: var=image_list.stdout_lines
 
     - name: List introspection PXE images
       shell: ls -l /var/lib/ironic/httpboot
       register: pxe_image_list
 
-    - debug: msg=pxe_image_list.stdout
+    - debug: var=pxe_image_list.stdout_lines
 
     - name: List container images
-      shell: source /home/stack/stackrc && openstack tripleo container image list
+      shell: source /home/stack/stackrc && openstack tripleo container image list -f yaml
       register: container_image_list
 
-    - debug: msg=container_image_list.stdout
+    - debug: var=container_image_list.stdout_lines
 
     - name: Validate instackenv.json
       shell: source /home/stack/stackrc && openstack overcloud node import --validate-only /home/stack/instackenv.json
@@ -43,13 +43,23 @@
       shell: source /home/stack/stackrc && openstack overcloud node import /home/stack/instackenv.json
 
     - name: List imported baremetal nodes
-      shell: source /home/stack/stackrc && openstack baremetal node list
+      shell: source /home/stack/stackrc && openstack baremetal node list -f yaml
       register: node_list
 
-    - debug: msg=node_list.stdout
+    - debug: var=node_list.stdout_lines
 
     - name: Introspect nodes
       shell: source /home/stack/stackrc && openstack overcloud node introspect --all-manageable --provide
 
+    - name: List introspected baremetal nodes
+      shell: source /home/stack/stackrc && openstack baremetal node list -f yaml
+      register: introspected_node_list
+
+    - debug: var=introspected_node_list.stdout_lines
+
     - name: Set root device for the nodes to boot from
       shell: source /home/stack/stackrc && /home/stack/extract_serial_for_sda.rb
+      register: disk_setup_output
+
+    - debug: var=disk_setup_output.stdout_lines
+
