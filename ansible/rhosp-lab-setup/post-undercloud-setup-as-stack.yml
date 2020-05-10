@@ -13,10 +13,28 @@
         remote_src: yes
 
     - name: Extract director images
-      shell: tar -C /home/stack/images -xvf /usr/share/rhosp-director-images/*-latest-16.0.tar
+      shell: 'for i in /usr/share/rhosp-director-images/*-latest-16.0.tar; do tar -C /home/stack/images -xvf "$i"; done'
 
     - name: Upload images for overcloud
       shell: source /home/stack/stackrc && openstack overcloud image upload --image-path /home/stack/images
+
+    - name: List uploaded images
+      shell: source /home/stack/stackrc && openstack image list
+      register: image_list
+
+    - debug: msg=image_list.stdout
+
+    - name: List introspection PXE images
+      shell: ls -l /var/lib/ironic/httpboot
+      register: pxe_image_list
+
+    - debug: msg=pxe_image_list.stdout
+
+    - name: List container images
+      shell: source /home/stack/stackrc && openstack tripleo container image list
+      register: container_image_list
+
+    - debug: msg=container_image_list.stdout
 
     - name: Validate instackenv.json
       shell: source /home/stack/stackrc && openstack overcloud node import --validate-only /home/stack/instackenv.json
@@ -26,9 +44,12 @@
 
     - name: List imported baremetal nodes
       shell: source /home/stack/stackrc && openstack baremetal node list
+      register: node_list
+
+    - debug: msg=node_list.stdout
 
     - name: Introspect nodes
-      shell: source /home/stack/stackrc && openstack baremetal node introspect --all-manageable --provide
+      shell: source /home/stack/stackrc && openstack overcloud node introspect --all-manageable --provide
 
     - name: Set root device for the nodes to boot from
       shell: source /home/stack/stackrc && /home/stack/extract_serial_for_sda.rb
