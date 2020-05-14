@@ -1,0 +1,27 @@
+---
+#
+# Sets SELinux to enforcing mode for RHOSP installation
+#
+
+- hosts: undercloud
+  remote_user: root
+  tasks:
+    - name: Enable SELinux on the undercloud
+      block:
+        - name: Set SELinux to enforcing mode
+          selinux:
+            policy: targeted
+            state: enforcing
+
+        - name: Ensure /.autorelabel exists
+          file:
+            path: /.autorelabel
+            state: touch
+
+        - name: Reboot to apply SELinux changes
+          reboot:
+            reboot_timeout: 1800
+      tags:
+        - rhosp
+        - never
+
