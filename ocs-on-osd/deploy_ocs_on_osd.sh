@@ -9,10 +9,40 @@
 # already), and updates it to the latest version before running the deployment
 # script from that directory.
 
+# IMPORTANT: If auths.json file exists, it is merged with the cluster's
+# existing pull secret. This step is skipped if the file is not available. Put
+# any custom authentication tokens in a valid json file called auths.json with
+# the following template (use auths.json.template):
+# {
+#   "auths": {
+#     "<AUTH_PROVIDER>": {
+#       "auth": "<AUTH_TOKEN>",
+#       "email": "<AUTH_EMAIL>"
+#     }
+#   }
+# }
+
+set -e
+
+show_spinner()
+{
+  seconds=600 # 10 minutes wait for cluster nodes to reboot
+  i=1
+  sp="/-\|"
+  echo -n ' '
+  while [[ $seconds -gt 0 ]]
+  do
+    printf "\b${sp:i++%${#sp}:1}"
+    let seconds--
+    sleep 1
+  done
+  printf "\b"
+}
+
 echo "### Checking for required tools in \$PATH.."
 echo
 
-if ! which ocm oc git
+if ! which ocm oc git jq
 then
   echo "Please ensure that ocm, oc and git are all available in \$PATH."
   exit 1
@@ -63,4 +93,63 @@ then
 else
   echo "Cluster $OSD_CLUSTER_NAME is ready!"
 fi
+
+echo
+echo "### Storing cluster's access credentials.."
+echo
+
+OSD_API_CREDENTIALS_ENDPOINT="/api/clusters_mgmt/v1/clusters/$OSD_CLUSTER_ID/credentials"
+ocm get "$OSD_API_CREDENTIALS_ENDPOINT" | jq -r .kubeconfig > kubeconfig
+echo "- kubeconfig: $PWD/kubeconfig"
+ocm get "$OSD_API_CREDENTIALS_ENDPOINT" | jq -r .admin > admin
+echo "- kubeadmin credentials: $PWD/admin"
+
+export KUBECONFIG="$PWD/kubeconfig"
+
+echo
+echo "### Checking authentication.."
+echo
+
+oc status
+
+echo
+echo "### Updating the cluster pull secret if applicable.."
+echo
+
+if [[ -s auths.json ]]
+then
+  echo "auths.json file exists, checking for .auths.."
+  if [[ $(jq 'has("auths")' <auths.json) == true ]]
+  then
+    echo "- auths.json contains .auths."
+    echo "- Pulling existing pull secrets.."
+    oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq > secret.json
+    echo "- Merging auths.json into secret.json.."
+    jq -s '.[0] * .[1]' secret.json auths.json > pull-secret.json
+    echo "- Updating pull-secret on the cluster.."
+    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=pull-secret.json
+    echo
+    echo -n "- Waiting 10 minutes for the cluster to propagate the pull secret.. "
+    show_spinner
+    echo "done!"
+  fi
+else
+  echo "- auths.json file doesn't exist; not updating the pull secret."
+fi
+
+echo
+echo "### Installing community operators.."
+echo
+
+oc apply -f 'https://raw.githubusercontent.com/JohnStrunk/ocp-rook-ceph/master/community-operators.yaml'
+echo
+echo "- Waiting for community-operators deployment to be available."
+oc wait deployment/community-operators -n openshift-marketplace --for condition=available
+echo "- Community operators installed."
+
+echo
+echo "### Labeling nodes for OCS.."
+echo
+
+oc label no -lnode-role.kubernetes.io/worker cluster.ocs.openshift.io/openshift-storage=""
 

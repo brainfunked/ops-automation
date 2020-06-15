@@ -1,0 +1,8 @@
+{
+  "auths": {
+    "<AUTH_PROVIDER>": {
+      "auth": "<AUTH_TOKEN>",
+      "email": "<AUTH_EMAIL>"
+    }
+  }
+}
