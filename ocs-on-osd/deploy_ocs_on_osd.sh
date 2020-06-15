@@ -24,9 +24,10 @@
 
 set -e
 
-show_spinner()
+# Shows spinner for and sleeps for specified number of seconds, 10 otherwise
+show_spinner_and_sleep()
 {
-  seconds=600 # 10 minutes wait for cluster nodes to reboot
+  seconds=${1:-10}
   i=1
   sp="/-\|"
   echo -n ' '
@@ -44,7 +45,7 @@ echo
 
 if ! which ocm oc git jq
 then
-  echo "Please ensure that ocm, oc and git are all available in \$PATH."
+  echo "- Please ensure that ocm, oc and git are all available in \$PATH."
   exit 1
 fi
 
@@ -54,7 +55,7 @@ echo
 
 if ! ocm whoami
 then
-  echo "Please ensure that ocm is logged in."
+  echo "- Please ensure that ocm is logged in."
   exit 2
 fi
 
@@ -66,14 +67,15 @@ read -r OSD_CLUSTER_ID OSD_CLUSTER_NAME OSD_CLUSTER_STATE <<<$(ocm cluster list 
 
 if [[ -z $OSD_CLUSTER_ID ]]
 then
-  echo "No cluster found."
+  echo "- No cluster found."
   exit 3
 fi
 
 echo "$OSD_CLUSTER_ID" > cluster_id
 echo "$OSD_CLUSTER_NAME" > cluster_name
 
-echo "ID: $OSD_CLUSTER_ID, NAME: $OSD_CLUSTER_NAME"
+echo "ID: $OSD_CLUSTER_ID"
+echo "NAME: $OSD_CLUSTER_NAME"
 
 echo
 echo "### Checking (and waiting) for the cluster to be ready.."
@@ -81,17 +83,23 @@ echo
 
 if [[ $OSD_CLUSTER_STATE != ready ]]
 then
+  # Check for the state to be "installing"
   while [[ $OSD_CLUSTER_STATE == installing ]]
   do
     OSD_CLUSTER_STATE=$(ocm cluster status $OSD_CLUSTER_ID | awk '$1 == "State:" { print $2 }')
-    sleep 10
-    echo "$(date +'%k:%M'): Waiting for the cluster to finish installing"
+    echo -n "- $(date +'%k:%M'): Waiting for the cluster to finish installing.. "
+    show_spinner_and_sleep 60
   done
+  echo "done!"
 
-  echo "Cluster $OSD_CLUSTER_NAME is not ready (state: $OSD_CLUSTER_STATE)"
-  exit 4
+  # Once installation is finished, check that the cluster is actually ready
+  if [[ $OSD_CLUSTER_STATE != ready ]]
+  then
+    echo "- [ERROR] Cluster $OSD_CLUSTER_NAME state: $OSD_CLUSTER_STATE."
+    exit 4
+  fi
 else
-  echo "Cluster $OSD_CLUSTER_NAME is ready!"
+  echo "- Cluster $OSD_CLUSTER_NAME is ready!"
 fi
 
 echo
@@ -130,7 +138,7 @@ then
     oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=pull-secret.json
     echo
     echo -n "- Waiting 10 minutes for the cluster to propagate the pull secret.. "
-    show_spinner
+    show_spinner_and_sleep 600
     echo "done!"
   fi
 else
