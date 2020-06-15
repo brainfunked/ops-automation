@@ -4,6 +4,10 @@
 # This script assumes that there is only one cluster and explicitly works only
 # on the first cluster output from `ocm cluster list`.
 
+# The script is largely idempotent. Steps already completed should be skipped.
+# If the script fails before completion due to timeouts and such, just run it
+# again and it should resume.
+
 # Ensure that ocm and oc are in $PATH. The script clones
 # https://github.com/JohnStrunk/ocp-rook-ceph into a subdirectory (if it isn't
 # already), and updates it to the latest version before running the deployment
@@ -45,7 +49,7 @@ echo
 
 if ! which ocm oc git jq
 then
-  echo "- Please ensure that ocm, oc and git are all available in \$PATH."
+  echo "- [ERROR] Please ensure that ocm, oc and git are all available in \$PATH."
   exit 1
 fi
 
@@ -55,7 +59,7 @@ echo
 
 if ! ocm whoami
 then
-  echo "- Please ensure that ocm is logged in."
+  echo "- [ERROR] Please ensure that ocm is logged in."
   exit 2
 fi
 
@@ -67,7 +71,7 @@ read -r OSD_CLUSTER_ID OSD_CLUSTER_NAME OSD_CLUSTER_STATE <<<$(ocm cluster list 
 
 if [[ -z $OSD_CLUSTER_ID ]]
 then
-  echo "- No cluster found."
+  echo "- [ERROR] No cluster found."
   exit 3
 fi
 
@@ -126,20 +130,28 @@ echo
 
 if [[ -s auths.json ]]
 then
-  echo "auths.json file exists, checking for .auths.."
-  if [[ $(jq 'has("auths")' <auths.json) == true ]]
+  echo "- auths.json file exists, checking for existing pull-secret json file."
+  PULL_SECRET_OUTPUT="pull-secret_${OSD_CLUSTER_ID}.json"
+  if [[ -s $PULL_SECRET_OUTPUT && $(jq 'has("auths")' <"$PULL_SECRET_OUTPUT") == true ]]
   then
-    echo "- auths.json contains .auths."
-    echo "- Pulling existing pull secrets.."
-    oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq > secret.json
-    echo "- Merging auths.json into secret.json.."
-    jq -s '.[0] * .[1]' secret.json auths.json > pull-secret.json
-    echo "- Updating pull-secret on the cluster.."
-    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=pull-secret.json
-    echo
-    echo -n "- Waiting 10 minutes for the cluster to propagate the pull secret.. "
-    show_spinner_and_sleep 600
-    echo "done!"
+    echo "- ${PULL_SECRET_OUTPUT} exists and contains .auths object."
+    echo "- Not updating pull secret."
+  else
+    echo "- ${PULL_SECRET_OUTPUT} either doesn't exist or contain .auths object."
+    if [[ $(jq 'has("auths")' <auths.json) == true ]]
+    then
+      echo "- auths.json contains .auths object."
+      echo "- Fetching existing pull secrets.."
+      oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq > secret.json
+      echo "- Merging auths.json into secret.json.."
+      jq -s '.[0] * .[1]' secret.json auths.json > "$PULL_SECRET_OUTPUT"
+      echo "- Updating pull-secret on the cluster.."
+      oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="$PULL_SECRET_OUTPUT"
+      echo
+      echo -n "- Waiting 20 minutes for the cluster to propagate the pull secret.. "
+      show_spinner_and_sleep 1200
+      echo "done!"
+    fi
   fi
 else
   echo "- auths.json file doesn't exist; not updating the pull secret."
