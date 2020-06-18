@@ -28,6 +28,24 @@
 
 set -e
 
+usage()
+{
+  echo "--details-only: Write cluster details in files and quit."
+}
+
+while [[ ${1:+defined} ]]
+do
+  case "$1" in
+    "--details-only")
+      DETAILS_ONLY="true"
+      ;;
+    *)
+      usage
+      ;;
+  esac
+  shift
+done
+
 # Shows spinner for and sleeps for specified number of seconds, 10 otherwise
 show_spinner_and_sleep()
 {
@@ -124,6 +142,13 @@ echo "### Checking authentication.."
 echo
 
 oc status
+
+if [[ $DETAILS_ONLY == true ]]
+then
+  echo
+  echo "### --details-only specified. Stopping."
+  exit
+fi
 
 echo
 echo "### Updating the cluster pull secret if applicable.."
