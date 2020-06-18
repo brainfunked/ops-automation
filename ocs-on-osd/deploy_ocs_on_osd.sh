@@ -106,8 +106,13 @@ echo
 if [[ $OSD_CLUSTER_STATE != ready ]]
 then
   # Check for the state to be "installing"
-  while [[ $OSD_CLUSTER_STATE == installing ]]
+  echo "- Cluster is not ready. Checking for ongoing installation.."
+  while
     OSD_CLUSTER_STATE=$(ocm cluster status $OSD_CLUSTER_ID | awk '$1 == "State:" { print $2 }')
+    if [[ $OSD_CLUSTER_STATE != installing ]]
+    then
+      break
+    fi
     echo -n "- $(date +'%k:%M'): Waiting for the cluster to finish installing.. "
     show_spinner_and_sleep 60
   do
