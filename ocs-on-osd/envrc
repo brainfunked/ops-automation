@@ -1,0 +1,9 @@
+export OSD_PROJECT_DIR=~/projects/osd
+export OCM_TOKEN=$(<$OSD_PROJECT_DIR/token)
+export OSD_ENV=stage
+export CLUSTER_NAME=$(<$OSD_PROJECT_DIR/cluster_name)
+export ARTIFACTS="${OSD_PROJECT_DIR}/artifacts/$(date +%F_%T)"
+export TEST_KUBECONFIG="${OSD_PROJECT_DIR}/kubeconfig"
+export OCS_ADDON_TEST_HARNESS_TAG="0.01"
+export OCS_ADDON_TEST_HARNESS="quay.io/mkarnikredhat/ocs-operator-osde2e-test-harness"
+export ADDON_TEST_HARNESSES="$OCS_ADDON_TEST_HARNESS:$OCS_ADDON_TEST_HARNESS_TAG"
