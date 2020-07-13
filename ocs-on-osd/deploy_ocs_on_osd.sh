@@ -30,7 +30,13 @@ set -e
 
 usage()
 {
-  echo "--details-only: Write cluster details in files and quit."
+  cat <<_END_
+deploy-ocs-on-osd.sh <OP>
+
+Possible OPs:
+--details-only: Write cluster details in files and quit. Any other options are ignored.
+--prepare: (Default) Run the whole script to prepare the cluster for OCS deployment.
+_END_
 }
 
 while [[ ${1:+defined} ]]
@@ -38,13 +44,27 @@ do
   case "$1" in
     "--details-only")
       DETAILS_ONLY="true"
+      echo "=== Only fetching the details."
+      echo
+      ;;
+    "--prepare")
+      PREPARE_CLUSTER="true"
+      echo "=== Preparing the cluster for OCS deployment."
+      echo
       ;;
     *)
       usage
+      exit 255
       ;;
   esac
   shift
 done
+
+if ! [[ $DETAILS_ONLY == true || $PREPARE_CLUSTER == true ]]
+then
+  usage
+  exit 255
+fi
 
 # Shows spinner for and sleeps for specified number of seconds, 10 otherwise
 show_spinner_and_sleep()
@@ -152,7 +172,7 @@ if [[ $DETAILS_ONLY == true ]]
 then
   echo
   echo "### --details-only specified. Stopping."
-  exit
+  exit 254
 fi
 
 echo
@@ -179,7 +199,7 @@ then
       echo "- Updating pull-secret on the cluster.."
       oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="$PULL_SECRET_OUTPUT"
       echo
-      echo -n "- Waiting 20 minutes for the cluster to propagate the pull secret.. "
+      echo -n "- $(date +'%k:%M'): Waiting 20 minutes for the cluster to propagate the pull secret.. "
       show_spinner_and_sleep 1200
       echo "done!"
     fi
