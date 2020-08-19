@@ -57,8 +57,8 @@
 - hosts: ceph_ansible
   remote_user: cephansible
   tasks:
-    - name: Verify ssh connection to other ceph hosts
-      shell: "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no {{ item }} exit"
+    - name: Verify sudo access over ssh on other ceph hosts
+      shell: "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no {{ item }} 'sudo hostname && exit'"
       delegate_to: "{{ inventory_hostname }}"
       with_items:
         - "{{ groups['ceph_all'] }}"
