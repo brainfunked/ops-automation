@@ -23,7 +23,4 @@
         - name: Reboot after system update
           reboot:
             reboot_timeout: 900
-      tags:
-        - system-update
-        - never
 

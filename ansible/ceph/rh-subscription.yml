@@ -37,9 +37,6 @@
             - rhel-8-for-x86_64-baseos-rpms
             - rhel-8-for-x86_64-appstream-rpms
           state: enabled
-    tags:
-      - rhcs
-      - never
     when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8" and pool_id_rhel_8 is defined
 
   - name: RHSM configuration for RHEL 7
@@ -63,9 +60,6 @@
             - rhel-7-server-rpms
             - rhel-7-server-extras-rpms
           state: enabled
-    tags:
-      - rhcs
-      - never
     when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7" and pool_id_rhel_7 is defined
 
 - hosts: ceph_ansible
@@ -79,9 +73,6 @@
             - rhceph-4-tools-for-rhel-8-x86_64-rpms
             - ansible-2.8-for-rhel-8-x86_64-rpms
           state: enabled
-        tags:
-          - rhcs
-          - never
         when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
 
       - name: Enable ceph repository on RHEL 7
@@ -90,10 +81,4 @@
             - rhel-7-server-rhceph-4-tools-rpms
             - rhel-7-server-ansible-2.8-rpms
           state: enabled
-        tags:
-          - rhcs
-          - never
         when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
-    tags:
-      - rhcs
-      - never

@@ -24,6 +24,4 @@
             regexp: 'ONBOOT=no'
             line: 'ONBOOT=yes'
           loop: "{{ ceph_nics }}"
-      tags:
-        - rhcs
-        - never
+
