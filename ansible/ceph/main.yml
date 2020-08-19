@@ -1,0 +1,19 @@
+---
+# Make sure that the inventory is populated with the undercloud and cloud hosts
+# To setup for RHOSP deployment, use the rhosp tag.
+# To setup for RHCS deployment, use the rhcs tag.
+# RHSM is locked to RHEL 8.1 for RHOSP 16 for now. To do a full package update
+#   while locked to RHEL 8.1, use the system-update tag.
+
+- import_playbook: rh-subscription.yml
+
+- import_playbook: disable-epel.yml
+
+- import_playbook: packages.yml
+  tags: always
+
+- import_playbook: package-update-all.yml
+
+- import_playbook: user-environment.yml
+  #ignore_errors: true
+  tags: always

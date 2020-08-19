@@ -1,0 +1,29 @@
+---
+#
+# Does an update of all packages
+#
+
+- hosts: ceph_all
+  remote_user: root
+  tasks:
+    - name: Full system package update (to a newer release unless locked)
+      block:
+        - name: dnf update all packages
+          dnf:
+            name: '*'
+            state: latest
+          when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+        - name: yum update all packages
+          yum:
+            name: '*'
+            state: latest
+          when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+
+        - name: Reboot after system update
+          reboot:
+            reboot_timeout: 900
+      tags:
+        - system-update
+        - never
+

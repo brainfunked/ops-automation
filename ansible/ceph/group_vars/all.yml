@@ -1,0 +1,11 @@
+---
+# pool_id is required for subscription management to work
+# RHEL 8
+pool_id_rhel_8:
+# RHEL 7
+pool_id_rhel_7:
+
+# Interface names to enable for Ceph
+ceph_nics:
+  - p7p1
+  - p7p2

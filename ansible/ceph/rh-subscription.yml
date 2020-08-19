@@ -1,0 +1,99 @@
+---
+#
+# Enables the subscription manager repositories
+#
+
+- hosts: ceph_all
+  remote_user: root
+  vars_prompt:
+    - name: rhsm_user
+      prompt: "RHSM username: "
+      private: no
+
+    - name: rhsm_password
+      prompt: "RHSM password: "
+      private: yes
+
+  tasks:
+  - name: RHSM configuration for RHEL 8
+    block:
+      - name: Register via subscription-manager
+        redhat_subscription:
+          state: present
+          username: "{{ rhsm_user }}"
+          password: "{{ rhsm_password }}"
+          force_register: yes
+          pool_ids: "{{ pool_id_rhel_8 }}"
+          release: "8.1"
+
+      - name: Disable all RHSM repositories
+        rhsm_repository:
+          name: '*'
+          state: disabled
+
+      - name: Enable base RHEL repositories
+        rhsm_repository:
+          name:
+            - rhel-8-for-x86_64-baseos-rpms
+            - rhel-8-for-x86_64-appstream-rpms
+          state: enabled
+    tags:
+      - rhcs
+      - never
+    when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8" and pool_id_rhel_8 is defined
+
+  - name: RHSM configuration for RHEL 7
+    block:
+      - name: Register via subscription-manager
+        redhat_subscription:
+          state: present
+          username: "{{ rhsm_user }}"
+          password: "{{ rhsm_password }}"
+          force_register: yes
+          pool_ids: "{{ pool_id_rhel_7 }}"
+
+      - name: Disable all RHSM repositories
+        rhsm_repository:
+          name: '*'
+          state: disabled
+
+      - name: Enable base RHEL repositories
+        rhsm_repository:
+          name:
+            - rhel-7-server-rpms
+            - rhel-7-server-extras-rpms
+          state: enabled
+    tags:
+      - rhcs
+      - never
+    when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7" and pool_id_rhel_7 is defined
+
+- hosts: ceph_ansible
+  remote_user: root
+  tasks:
+  - name: Enable ceph repository on ansible node
+    block:
+      - name: Enable ceph repository on RHEL 8
+        rhsm_repository:
+          name:
+            - rhceph-4-tools-for-rhel-8-x86_64-rpms
+            - ansible-2.8-for-rhel-8-x86_64-rpms
+          state: enabled
+        tags:
+          - rhcs
+          - never
+        when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+      - name: Enable ceph repository on RHEL 7
+        rhsm_repository:
+          name:
+            - rhel-7-server-rhceph-4-tools-rpms
+            - rhel-7-server-ansible-2.8-rpms
+          state: enabled
+        tags:
+          - rhcs
+          - never
+        when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+    tags:
+      - rhcs
+      - never
