@@ -5,6 +5,8 @@
 # RHSM is locked to RHEL 8.1 for RHOSP 16 for now. To do a full package update
 #   while locked to RHEL 8.1, use the system-update tag.
 
+- import_playbook: setup-nics.yml
+
 - import_playbook: rh-subscription.yml
 
 - import_playbook: disable-epel.yml

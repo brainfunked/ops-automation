@@ -1,0 +1,29 @@
+---
+#
+# Runs the clean-interfaces script to remove the pre-existing network
+# configuration so as not to interfere with OSP deployments
+#
+
+- hosts: ceph_all
+  remote_user: root
+  tasks:
+    - name: Network configuration for lab networks
+      block:
+        - name: Disable pre-existing network interfaces
+          command: /root/clean-interfaces.sh --disable
+
+        - name: Enable ceph network interface
+          shell: ifup {{ item }}
+          args:
+            executable: /bin/bash
+          loop: "{{ ceph_nics }}"
+
+        - name: Enable ceph network interfaces on boot
+          lineinfile:
+            path: "/etc/sysconfig/network-scripts/ifcfg-{{ item }}"
+            regexp: 'ONBOOT=no'
+            line: 'ONBOOT=yes'
+          loop: "{{ ceph_nics }}"
+      tags:
+        - rhcs
+        - never
