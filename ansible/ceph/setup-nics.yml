@@ -11,6 +11,8 @@
       block:
         - name: Disable pre-existing network interfaces
           command: /root/clean-interfaces.sh --disable
+          tags:
+            - network-cleanup
 
         - name: Enable ceph network interface
           shell: ifup {{ item }}
