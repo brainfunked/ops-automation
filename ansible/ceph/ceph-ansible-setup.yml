@@ -1,0 +1,66 @@
+---
+# Installs ceph-ansible packages and configures the inventory.
+
+# Gather facts about all hosts just in case this playbook is run directly.
+# These facts are used to populate the configuration file templates.
+
+- name: Cache facts for all ceph hosts
+  hosts: ceph_all
+  remote_user: root
+  tasks: []
+
+- hosts: ceph_ansible
+  remote_user: root
+  tasks:
+    - name: dnf install ceph-ansible
+      dnf:
+        name: ceph-ansible
+        state: present
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+    - name: yum install ceph-ansible
+      yum:
+        name: ceph-ansible
+        state: present
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+
+    - name: Populate hosts inventory for ceph-ansible
+      template:
+        src: templates/ceph-ansible/hosts.j2
+        dest: /etc/ansible/hosts
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Populate all.yml for ceph-ansible
+      template:
+        src: templates/ceph-ansible/group_vars/all.yml.j2
+        dest: /usr/share/ceph-ansible/group_vars/all.yml
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy osds.yml for ceph-ansible
+      copy:
+        src: templates/ceph-ansible/group_vars/osds.yml
+        dest: /usr/share/ceph-ansible/group_vars/osds.yml
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy site-docker.yml on the host for ceph-ansible
+      copy:
+        src: /usr/share/ceph-ansible/site-container.yml.sample
+        dest: /usr/share/ceph-ansible/site-container.yml
+        owner: root
+        group: root
+        mode: '0644'
+        remote_src: yes
+
+    - name: Create ceph-ansible-keys directory
+      become: yes
+      become_user: cephansible
+      file:
+        path: /home/cephansible/ceph-ansible-keys
+        state: directory
+

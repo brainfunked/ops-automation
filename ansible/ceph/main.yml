@@ -20,3 +20,7 @@
 
 - import_playbook: setup-nics.yml
 
+- import_playbook: ceph-ansible-user-setup.yml
+
+- import_playbook: ceph-ansible-setup.yml
+
