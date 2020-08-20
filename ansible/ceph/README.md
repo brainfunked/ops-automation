@@ -25,3 +25,16 @@ The inventory will be populated as:
 Edit `templates/ceph-ansible/group_vars/osds.yml` manually for any specific OSD
 configuration, other than automatic.
 
+If the installation fails because the NVMe drive has a GPT table, use the `z`
+command in `gdisk` under expert commands accessible after pressing `x` manually
+on each of those drives on the ceph nodes.
+
+Once everything is done, you can run ceph-ansible on the `ceph_ansible` node to
+deploy the Ceph cluster:
+
+```
+cephansible@ceph_ansible_node$ cd /usr/share/ceph-ansible
+cephansible@ceph_ansible_node$ ansible -m ping all
+cephansible@ceph_ansible_node$ ansible-playbook site-container.yml -vv
+```
+

@@ -18,9 +18,6 @@
             mode: '0440'
             owner: root
             group: root
-      tags:
-        - rhcs
-        - never
 
 - hosts: ceph_ansible
   remote_user: cephansible
@@ -38,9 +35,6 @@
             src: /home/cephansible/.ssh/id_rsa.pub
             dest: files/cephansible.pub
             flat: true
-      tags:
-        - rhcs
-        - never
 
 - hosts: ceph_all
   remote_user: root
@@ -50,9 +44,6 @@
         user: cephansible
         state: present
         key: "{{ lookup('file', 'files/cephansible.pub') }}"
-      tags:
-        - rhcs
-        - never
 
 - hosts: ceph_ansible
   remote_user: cephansible
@@ -62,6 +53,4 @@
       delegate_to: "{{ inventory_hostname }}"
       with_items:
         - "{{ groups['ceph_all'] }}"
-      tags:
-        - remote
-        - never
+

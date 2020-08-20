@@ -17,6 +17,7 @@
           - bash-completion
           - bind-utils
           - yum-utils
+          - gdisk
         state: present
       when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
 
@@ -31,5 +32,6 @@
           - bash-completion
           - bind-utils
           - yum-utils
+          - gdisk
         state: present
       when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"

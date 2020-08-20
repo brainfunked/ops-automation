@@ -4,10 +4,13 @@
 # Gather facts about all hosts just in case this playbook is run directly.
 # These facts are used to populate the configuration file templates.
 
-- name: Cache facts for all ceph hosts
-  hosts: ceph_all
+- hosts: ceph_all
   remote_user: root
-  tasks: []
+  tasks:
+    - name: Enable firewalld on all hosts
+      shell: "systemctl daemon-reload && systemctl unmask firewalld.service"
+      args:
+        executable: /bin/bash
 
 - hosts: ceph_ansible
   remote_user: root
