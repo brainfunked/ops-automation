@@ -41,7 +41,7 @@
   tasks:
     - name: root user ssh key creation
       block:
-        - name: Create ssh key for cephansible user
+        - name: Create ssh key for root user
           shell: "ssh-keygen -t rsa -N '' -C 'root@cephansible' -f ~/.ssh/id_rsa"
           args:
             executable: /bin/bash
