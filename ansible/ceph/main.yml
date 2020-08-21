@@ -6,21 +6,27 @@
 #   while locked to RHEL 8.1, use the system-update tag.
 
 - import_playbook: rh-subscription.yml
+  tags: system-update
 
 - import_playbook: disable-epel.yml
+  tags: system-update
 
 - import_playbook: package-update-all.yml
   tags: system-update
 
 - import_playbook: packages.yml
+  tags: user-setup
 
 - import_playbook: user-environment.yml
   #ignore_errors: true
   tags: user-setup
 
 - import_playbook: setup-nics.yml
+  tags: network
 
 - import_playbook: ceph-ansible-user-setup.yml
+  tags: ansible
 
 - import_playbook: ceph-ansible-setup.yml
+  tags: ansible
 
