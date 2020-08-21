@@ -33,7 +33,7 @@
         - name: Fetch cephansible user's ssh public key
           fetch:
             src: /home/cephansible/.ssh/id_rsa.pub
-            dest: files/cephansible.pub
+            dest: files/ssh_keys/cephansible.pub
             flat: true
 
 - hosts: ceph_all
@@ -43,7 +43,14 @@
       authorized_key:
         user: cephansible
         state: present
-        key: "{{ lookup('file', 'files/cephansible.pub') }}"
+        key: "{{ lookup('file', 'files/ssh_keys/cephansible.pub') }}"
+
+    - name: Distribution of additional users' ssh keys to all ceph nodes
+      authorized_key:
+        user: cephansible
+        state: present
+        key: "{{ item }}"
+        with_files: "{{ ssh_pub_key_files }}"
 
 - hosts: ceph_ansible
   remote_user: cephansible

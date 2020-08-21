@@ -28,13 +28,17 @@
   tasks:
     - name: dnf install ceph-ansible
       dnf:
-        name: ceph-ansible
+        name:
+          - ceph-ansible
+          - ceph-common
         state: present
       when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
 
     - name: yum install ceph-ansible
       yum:
-        name: ceph-ansible
+        name:
+          - ceph-ansible
+          - ceph-common
         state: present
       when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
 

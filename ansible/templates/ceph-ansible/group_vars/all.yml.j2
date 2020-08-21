@@ -9,6 +9,10 @@ ceph_iscsi_config_dev: false
 monitor_interface: {{ ceph_monitor_interface }}
 public_network: {{ ceph_public_network }}
 cluster_network: {{ ceph_cluster_network }}
+radosgw_interface: {{ ceph_monitor_interface }}
+ceph_conf_overrides:
+  global:
+    osd_pool_default_pg_num: 50
 ceph_docker_image: "rhceph/rhceph-4-rhel8"
 ceph_docker_image_tag: "latest"
 ceph_docker_registry: "registry.redhat.io"

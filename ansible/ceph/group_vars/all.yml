@@ -19,3 +19,9 @@ ceph_docker_registry_password:
 # User and password for both ceph dashboard and grafana
 ceph_gui_user: admin
 ceph_gui_password: admin
+
+# List of ssh keys to be copied onto ceph nodes. Place the keys in
+# files/ssh_keys/ with the extenion `pub` to be included. cephansible user's
+# generated key will automatically be added separately, explicitly.
+ssh_pub_key_files: "{{ query('fileglob', 'files/ssh_keys/*.pub') }}"
+
