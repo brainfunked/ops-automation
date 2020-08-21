@@ -24,7 +24,6 @@
           password: "{{ rhsm_password }}"
           force_register: yes
           pool_ids: "{{ pool_id_rhel_8 }}"
-          release: "8.1"
 
       - name: Disable all RHSM repositories
         rhsm_repository:
