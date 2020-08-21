@@ -1,0 +1,1 @@
+cephansible ALL=(root) NOPASSWD:ALL
