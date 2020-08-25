@@ -1,0 +1,34 @@
+---
+# Configures ceph client on the admin node post installation.
+
+- hosts: "{{ groups['ceph']|first }}"
+  remote_user: cephansible
+  tasks:
+    - name: Fetch ceph configuration and admin keyring
+      become: yes
+      become_user: root
+      fetch:
+        src: "/etc/ceph/{{ item }}"
+        dest: "files/{{ item }}"
+        flat: true
+      with_items:
+        - ceph.conf
+        - ceph.client.admin.keyring
+
+- hosts: ceph_ansible
+  remote_user: root
+  tasks:
+    - name: Install the copied ceph configuration files system-wide
+      copy:
+        src: "files/{{ item }}"
+        dest: "/etc/ceph/{{ item }}"
+        owner: root
+        group: root
+      with_items:
+        - ceph.conf
+        - ceph.client.admin.keyring
+
+    - name: Set permissions on ceph.client.admin.keyring
+      file:
+        path: "/etc/ceph/ceph.client.admin.keyring"
+        mode: '0400'
