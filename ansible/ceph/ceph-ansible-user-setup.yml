@@ -61,16 +61,16 @@
         user: cephansible
         state: present
         key: "{{ item }}"
-        with_file:
-          - files/ssh_keys/cephansible.pub
-          - files/ssh_keys/root.pub
+      with_file:
+        - files/ssh_keys/cephansible.pub
+        - files/ssh_keys/root.pub
 
     - name: Distribution of additional users' ssh keys to all ceph nodes
       authorized_key:
         user: cephansible
         state: present
         key: "{{ item }}"
-        with_files: "{{ ssh_pub_key_files }}"
+      with_file: "{{ ssh_pub_key_files }}"
 
 - hosts: ceph_ansible
   remote_user: cephansible
