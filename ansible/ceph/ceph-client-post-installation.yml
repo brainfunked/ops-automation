@@ -32,3 +32,14 @@
       file:
         path: "/etc/ceph/ceph.client.admin.keyring"
         mode: '0400'
+
+    - name: Get ceph cluster status
+      command: ceph -s
+      register: ceph_status
+      changed_when: false
+      run_once: true
+
+    - name: Show ceph status
+      debug:
+        msg: "{{ ceph_status.stdout_lines }}"
+      run_once: true
