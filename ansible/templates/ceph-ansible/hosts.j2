@@ -43,17 +43,17 @@
 ## db-[99:101]-node.example.com
 
 [mons]
-{% for host in groups['ceph'] %}
+{% for host in groups['ceph_nodes'] %}
 {{ hostvars[host]['ansible_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
 {% endfor %}
 
 [osds]
-{% for host in groups['ceph'] %}
+{% for host in groups['ceph_nodes'] %}
 {{ hostvars[host]['ansible_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
 {% endfor %}
 
 [mgrs]
-{% for host in groups['ceph'] %}
+{% for host in groups['ceph_nodes'] %}
 {{ hostvars[host]['ansible_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
 {% endfor %}
 
