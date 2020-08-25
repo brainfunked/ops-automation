@@ -5,61 +5,73 @@
 
 - hosts: ceph_all
   remote_user: root
-  vars_prompt:
-    - name: rhsm_user
-      prompt: "RHSM username: "
-      private: no
-
-    - name: rhsm_password
-      prompt: "RHSM password: "
-      private: yes
-
   tasks:
-  - name: RHSM configuration for RHEL 8
+  - name: RHSM registration.
     block:
-      - name: Register via subscription-manager
-        redhat_subscription:
-          state: present
-          username: "{{ rhsm_user }}"
-          password: "{{ rhsm_password }}"
-          force_register: yes
-          pool_ids: "{{ pool_id_rhel_8 }}"
+      - name: Fail if RHSM user is not provided.
+        fail:
+          msg: "rhsm_user must be defined if registration is enabled."
+        when: ( rhsm_user is not defined ) or ( rhsm_user == None) or ( rhsm_user|length == 0 )
 
-      - name: Disable all RHSM repositories
-        rhsm_repository:
-          name: '*'
-          state: disabled
+      - name: Fail if RHSM password is not provided.
+        fail:
+          msg: "rhsm_password must be defined if registration is enabled."
+        when: ( rhsm_password is not defined ) or ( rhsm_password == None) or ( rhsm_password|length == 0 )
 
-      - name: Enable base RHEL repositories
-        rhsm_repository:
-          name:
-            - rhel-8-for-x86_64-baseos-rpms
-            - rhel-8-for-x86_64-appstream-rpms
-          state: enabled
-    when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8" and pool_id_rhel_8 is defined
+      - name: RHSM registration on RHEL 8.
+        block:
+          - name: Register via subscription-manager.
+            redhat_subscription:
+              state: present
+              username: "{{ rhsm_user }}"
+              password: "{{ rhsm_password }}"
+              pool_ids: "{{ pool_id_rhel_8 | default(omit) }}"
+              consumer_id: "{{ hostvars[inventory_hostname]['rhsm_consumer_id'] | default(omit) }}"
+        when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
 
-  - name: RHSM configuration for RHEL 7
+      - name: RHSM registration on RHEL 7.
+        block:
+          - name: Register via subscription-manager.
+            redhat_subscription:
+              state: present
+              username: "{{ rhsm_user }}"
+              password: "{{ rhsm_password }}"
+              pool_ids: "{{ pool_id_rhel_7 | default(omit) }}"
+              consumer_id: "{{ hostvars[inventory_hostname]['rhsm_consumer_id'] | default(omit) }}"
+        when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+    tags: rhsm-registration
+
+  - name: RHSM repositories.
     block:
-      - name: Register via subscription-manager
-        redhat_subscription:
-          state: present
-          username: "{{ rhsm_user }}"
-          password: "{{ rhsm_password }}"
-          force_register: yes
-          pool_ids: "{{ pool_id_rhel_7 }}"
+      - name: RHSM repositories on RHEL 8.
+        block:
+          - name: Disable all RHSM repositories
+            rhsm_repository:
+              name: '*'
+              state: disabled
 
-      - name: Disable all RHSM repositories
-        rhsm_repository:
-          name: '*'
-          state: disabled
+          - name: Enable base RHEL repositories on all hosts.
+            rhsm_repository:
+              name:
+                - rhel-8-for-x86_64-baseos-rpms
+                - rhel-8-for-x86_64-appstream-rpms
+              state: enabled
+        when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
 
-      - name: Enable base RHEL repositories
-        rhsm_repository:
-          name:
-            - rhel-7-server-rpms
-            - rhel-7-server-extras-rpms
-          state: enabled
-    when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7" and pool_id_rhel_7 is defined
+      - name: RHSM repositories on RHEL 7.
+        block:
+          - name: Disable all RHSM repositories.
+            rhsm_repository:
+              name: '*'
+              state: disabled
+
+          - name: Enable base RHEL repositories on all hosts.
+            rhsm_repository:
+              name:
+                - rhel-7-server-rpms
+                - rhel-7-server-extras-rpms
+              state: enabled
+        when: ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
 
 - hosts: ceph_ansible
   remote_user: root

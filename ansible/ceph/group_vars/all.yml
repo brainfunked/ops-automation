@@ -1,10 +1,31 @@
 ---
-# pool_id is required for subscription management to work
-# RHEL 8
-pool_id_rhel_8:
-# RHEL 7
-pool_id_rhel_7:
+## Red Hat subscription management registration
+#
+# Registration is carried out unless the tag `rhsm-registration` is
+# skipped.
 
+# RHSM username and password are mandatory if registration is enabled.
+rhsm_user: ''
+rhsm_password: ''
+
+# pool_id is required for registration as well. Make sure to configure one if
+# you want to register. Repositories can't be enabled without attaching a pool.
+# RHEL 8
+#pool_id_rhel_8:
+# RHEL 7
+#pool_id_rhel_7:
+
+
+## SSH configuration
+#
+# List of ssh keys to be copied onto ceph nodes. Place the keys in
+# files/ssh_keys/ with the extenion `pub` to be included. cephansible user's
+# generated key will automatically be added separately, explicitly.
+ssh_pub_key_files: "{{ query('fileglob', 'files/ssh_keys/*.pub') }}"
+
+
+## Ceph configuration
+#
 # Interface names to enable for Ceph
 ceph_nics:
   - p7p1
@@ -19,9 +40,4 @@ ceph_docker_registry_password:
 # User and password for both ceph dashboard and grafana
 ceph_gui_user: admin
 ceph_gui_password: admin
-
-# List of ssh keys to be copied onto ceph nodes. Place the keys in
-# files/ssh_keys/ with the extenion `pub` to be included. cephansible user's
-# generated key will automatically be added separately, explicitly.
-ssh_pub_key_files: "{{ query('fileglob', 'files/ssh_keys/*.pub') }}"
 

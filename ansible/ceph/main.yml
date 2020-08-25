@@ -6,7 +6,7 @@
 #   while locked to RHEL 8.1, use the system-update tag.
 
 - import_playbook: rh-subscription.yml
-  tags: system-update
+  tags: rhsm
 
 - import_playbook: disable-epel.yml
   tags: system-update
