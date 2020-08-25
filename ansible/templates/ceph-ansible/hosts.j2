@@ -58,4 +58,6 @@
 {% endfor %}
 
 [grafana-server]
-{{ ansible_hostname }} ansible_host={{ ansible_fqdn }}
+{% for host in groups['ceph_nodes']|first %}
+{{ hostvars[host]['ansible_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
+{% endfor %}

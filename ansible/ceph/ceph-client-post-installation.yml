@@ -1,7 +1,7 @@
 ---
 # Configures ceph client on the admin node post installation.
 
-- hosts: "{{ groups['ceph']|first }}"
+- hosts: "{{ groups['ceph_nodes']|first }}"
   remote_user: cephansible
   tasks:
     - name: Fetch ceph configuration and admin keyring
