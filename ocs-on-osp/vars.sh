@@ -19,8 +19,8 @@ FLOATING_IP="10.0.109.242"
 
 # Custom NTP servers are required in various lab environments.
 # If this isn't required in your environment, comment the NTP_SERVERS
-# declaration out and the corresponding script will fail with exit
-# status 255.
+# declaration out and the installation script will skip over the
+# ignition configuration required to implement this configuration.
 NTP_SERVERS=( clock.redhat.com clock2.redhat.com )
 
 # The following are used to update the cluster's pull secrets to pull from
