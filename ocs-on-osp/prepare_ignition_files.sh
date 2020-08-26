@@ -105,7 +105,7 @@ jq -M --slurpfile files "bootstrap_files_array.json" \
   'del(.storage.files) | .storage |= . + {files:($files[])}' \
   "bootstrap.ign.bak" > "bootstrap.ign"
 
-diff -u "bootstrap.ign.bak.json" "bootstrap.ign"
+diff -u "bootstrap.ign.bak.json" "bootstrap.ign" || true
 echo
 
 for i in master worker
@@ -115,7 +115,7 @@ do
     '.storage.files |= . + $chrony' \
     "${i}.ign.bak" > "${i}.ign"
 
-  diff -u "${i}.ign.bak.json" "${i}.ign"
+  diff -u "${i}.ign.bak.json" "${i}.ign" || true
   echo
 done
 
