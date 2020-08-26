@@ -2,11 +2,12 @@
 
 set -e
 
-FLOATING_IP="10.0.109.242"
-echo "## Floating IP: $FLOATING_IP"
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+VARS_SRC="$SCRIPT_DIR/vars.sh"
 
-TF_DIR=~/psi/latest
-TF_VARS_FILE="$TF_DIR/terraform.tfvars.json"
+source "$VARS_SRC"
+
+echo "## Floating IP: $FLOATING_IP"
 
 if ! [[ -f $TF_VARS_FILE ]]
 then

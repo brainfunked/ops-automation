@@ -2,8 +2,10 @@
 
 set -e
 
-SECRETS_FILE=~/ocs/secret.json
-AUTHS_FILE=~/ocs/rhceph-dev_auths.json
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+VARS_SRC="$SCRIPT_DIR/vars.sh"
+
+source "$VARS_SRC"
 
 if ! [[ -f $AUTHS_FILE ]]
 then

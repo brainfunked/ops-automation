@@ -1,7 +1,9 @@
 #!/bin/bash
 
-CLUSTER_NAME=ocs.mkarnik.com
-CLUSTER_DIR=~/psi/"$CLUSTER_NAME"
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+VARS_SRC="$SCRIPT_DIR/vars.sh"
+
+source "$VARS_SRC"
 
 mkdir -pv "$CLUSTER_DIR"
 

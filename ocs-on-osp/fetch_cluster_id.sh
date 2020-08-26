@@ -2,9 +2,10 @@
 
 set -e
 
-TF_DIR=~/psi/latest
-TF_VARS_FILE="$TF_DIR/terraform.tfvars.json"
-CLUSTER_ID_FILE="$TF_DIR/cluster.id"
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+VARS_SRC="$SCRIPT_DIR/vars.sh"
+
+source "$VARS_SRC"
 
 if ! [[ -f $TF_VARS_FILE ]]
 then
