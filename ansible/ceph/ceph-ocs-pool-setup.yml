@@ -44,7 +44,7 @@
 
     - name: Gather ceph details for ocs-operator external mode.
       shell: |
-        python /root/ceph-external-cluster-details-exporter.py \
+        python3 /root/ceph-external-cluster-details-exporter.py \
               --rbd-data-pool-name {{ ceph_pool_name }} > /root/ocs_data.json
       args:
         executable: /bin/bash
