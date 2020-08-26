@@ -119,7 +119,43 @@ do
   echo
 done
 
+echo
+echo "## Installing OCP."
+echo
+
+openshift-install create cluster
+
+echo
+echo "## Setting up the ingress floating IP: $FLOATING_IP"
+echo
+
+if ! [[ -f $TF_VARS_FILE ]]
+then
+  echo "Unable to read terraform vars file: $TF_VARS_FILE"
+  exit 1
+fi
+
+CLUSTER_ID=$(jq -M '.cluster_id' "$TF_VARS_FILE" | sed 's/"//g')
+echo "# Cluster ID: $CLUSTER_ID"
+INGRESS_PORT="${CLUSTER_ID}-ingress-port"
+echo "# Ingress Port: $INGRESS_PORT"
+echo "# Floating IP: $FLOATING_IP"
+openstack floating ip set --port "$INGRESS_PORT" "$FLOATING_IP"
+echo "# Floating IP set."
+
+ping_console() {
+  echo -n "# Checking if console is reachable on the floating IP.."
+  ping -c 1 console-openshift-console.apps.ocs.mkarnik.com &> /dev/null
+  PING_SUCCESS=$?
+  if ! [[ $PING_SUCCESS == 0 ]]
+  then
+    echo " retrying."
+  fi
+
+  return $PING_SUCCESS
+}
+
+while ! ping_console; do true; done
+echo " done!"
+
 popd
-echo
-echo "## You can now deploy the cluster."
-echo
