@@ -13,9 +13,6 @@ then
   exit 1
 fi
 
-TF_DIR=~/psi/latest
-TF_VARS_FILE="$TF_DIR/terraform.tfvars.json"
-
 if ! [[ -f $TF_VARS_FILE ]]
 then
   echo "Unable to read terraform vars file: $TF_VARS_FILE"
@@ -23,7 +20,7 @@ then
 fi
 
 CLUSTER_ID=$(jq ."cluster_id" <"$TF_VARS_FILE" -M | sed 's/"//g')
-PULL_SECRET_OUTPUT=~/ocs/pull-secret_${CLUSTER_ID}.json
+PULL_SECRET_OUTPUT="${CLUSTER_DIR}/pull-secret_${CLUSTER_ID}.json"
 
 echo "## Cluster ID: $CLUSTER_ID"
 echo "## Pull secret output file: $PULL_SECRET_OUTPUT"
