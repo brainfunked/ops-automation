@@ -98,14 +98,14 @@ chrony_index=$(jq -M '.storage.files | map(.path == "/etc/motd") | index(true)' 
 let chrony_index++
 
 jq -M --slurpfile chrony "$CHRONY_CONF_IGN_FILE" \
-  ".storage.files[0:$chrony_index] + [\$chrony] + .storage.files[$chrony_index:]" \
+  ".storage.files[0:$chrony_index] + \$chrony + .storage.files[$chrony_index:]" \
   "bootstrap.ign.bak" > "bootstrap_files_array.json"
 
 jq -M --slurpfile files "bootstrap_files_array.json" \
   'del(.storage.files) | .storage |= . + {files:($files[])}' \
   "bootstrap.ign.bak" > "bootstrap.ign"
 
-diff -u "bootstrap.ign.bak" "bootstrap.ign"
+diff -u "bootstrap.ign.bak.json" "bootstrap.ign"
 echo
 
 for i in master worker
@@ -115,7 +115,7 @@ do
     '.storage.files |= . + $chrony' \
     "${i}.ign.bak" > "${i}.ign"
 
-  diff -u "${i}.ign.bak" "${i}.ign"
+  diff -u "${i}.ign.bak.json" "${i}.ign"
   echo
 done
 
