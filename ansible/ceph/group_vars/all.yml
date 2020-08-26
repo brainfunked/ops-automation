@@ -41,3 +41,8 @@ ceph_docker_registry_password:
 ceph_gui_user: admin
 ceph_gui_password: admin
 
+# Configuration of the ceph pool for ocs-operator external mode.
+# The pool is created for rbd.
+ceph_pool_name: ocs
+# Ensure that the pg_num is power of two.
+ceph_pool_pg_num: 64

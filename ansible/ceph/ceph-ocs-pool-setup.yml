@@ -1,0 +1,57 @@
+---
+#
+# Create the pool for ocs and fetches the details for external mode using the
+# script downloaded from ocs-operator's StorageCluster creation dashboard. The
+# script is expected to be available as
+# `files/ocs/ceph-external-cluster-details-exporter.py`.
+#
+# It is assumed that the ceph_ansible node has ceph client installed. Run the
+# `ceph-client-on-ceph-ansible-node.yml` playbook first.
+#
+# If you already have the script downloaded from a previous
+# deployment; ensure that the script is fetched from the same version
+# of the ocs-operator/rook. If you don't have the script; before
+# running this playbook; install ocs-operator and start the
+# StorageCluster creation using external mode. Download the script
+# using the link shown.
+#
+# Run this playbook once the script is in place.
+#
+
+- hosts: ceph_ansible
+  remote_user: root
+  tasks:
+    - name: Create ceph pool for ocs-operator external mode.
+      command: >
+        ceph osd pool create {{ ceph_pool_name }} {{ ceph_pool_pg_num }} {{ ceph_pool_pg_num }}
+
+    - name: Initiate the pool as rbd pool.
+      command: >
+        rbd pool init {{ ceph_pool_name }}
+
+    - name: Get list of pools.
+      command: ceph osd lspools
+      register: ceph_pools_list
+
+    - name: Show list of pools.
+      debug:
+        msg: "{{ ceph_pools_list.stdout_lines }}"
+
+    - name: Copy over and run the ocs-operator script.
+      copy:
+        src: files/ocs/ceph-external-cluster-details-exporter.py
+        dest: /root/ceph-external-cluster-details-exporter.py
+
+    - name: Gather ceph details for ocs-operator external mode.
+      shell: |
+        python /root/ceph-external-cluster-details-exporter.py \
+              --rbd-data-pool-name {{ ceph_pool_name }} > /root/ocs_data.json
+      args:
+        executable: /bin/bash
+
+    - name: Download the ocs-operator cluster data to files/ocs/ocs_data.json
+      fetch:
+        src: /root/ocs_data.json
+        dest: files/ocs/ocs_data.json
+        flat: true
+
