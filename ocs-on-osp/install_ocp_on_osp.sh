@@ -138,7 +138,7 @@ then
   exit 1
 fi
 
-CLUSTER_ID=$(jq -M '.cluster_id' "$TF_VARS_FILE" | sed 's/"//g')
+export CLUSTER_ID=$(jq -M '.cluster_id' "$TF_VARS_FILE" | sed 's/"//g')
 echo "# Cluster ID: $CLUSTER_ID"
 INGRESS_PORT="${CLUSTER_ID}-ingress-port"
 echo "# Ingress Port: $INGRESS_PORT"
@@ -160,5 +160,47 @@ ping_console() {
 
 while ! ping_console; do true; done
 echo " done!"
+echo
 
 popd
+
+if ! [[ $UPDATE_PULL_SECRET == true ]]
+then
+  echo
+  echo "## UPDATE_PULL_SECRET is not 'true'. Exiting."
+  exit 0
+fi
+
+echo
+echo "## Pull secret update."
+echo
+
+export KUBECONFIG="$CLUSTER_DIR/auth/kubeconfig"
+echo "# Using KUBCONFIG=$KUBCONFIG"
+
+oc get nodes
+
+PULL_SECRET_OUTPUT="${CLUSTER_DIR}/pull-secret_${CLUSTER_ID}.json"
+echo "# Cluster ID: $CLUSTER_ID"
+echo "# Pull secret output file: $PULL_SECRET_OUTPUT"
+
+if [[ -s $PULL_SECRET_OUTPUT && $(jq 'has("auths")' <"$PULL_SECRET_OUTPUT") == true ]]
+then
+  echo "'${PULL_SECRET_OUTPUT}' exists and contains the 'auths' object."
+  echo "Not updating the pull secret."
+else
+  echo "'${PULL_SECRET_OUTPUT}' either doesn't exist or does not contain the 'auths' object."
+  if [[ $(jq 'has("auths")' <$AUTHS_FILE) == true ]]
+  then
+    echo "'$AUTHS_FILE' contains the 'auths' object."
+    echo "Fetching existing pull secrets into '$SECRETS_FILE'."
+    oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq . -M > "$SECRETS_FILE"
+    echo "Merging '${AUTHS_FILE}' into '${SECRETS_FILE}'."
+    jq -s '.[0] * .[1]' "$SECRETS_FILE" "$AUTHS_FILE" -M > "$PULL_SECRET_OUTPUT"
+    jq . "$PULL_SECRET_OUTPUT"
+    echo "Updating pull-secret on the cluster."
+    oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="$PULL_SECRET_OUTPUT"
+    echo "Done."
+    echo
+  fi
+fi

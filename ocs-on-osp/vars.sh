@@ -26,11 +26,26 @@ NTP_SERVERS=( clock.redhat.com clock2.redhat.com )
 # The following are used to update the cluster's pull secrets to pull from
 # other private registries such as from the rhceph-dev registry. These are used
 # by the update_pull_secret script.
-#
+UPDATE_PULL_SECRET=true
+
 # SECRETS_FILE is downloaded from the openshift cluster automatically.
 SECRETS_FILE="$CLUSTER_DIR/secrets.json"
 # AUTHS_FILE has to be created manually by combining all the custom pull
 # secrets that you want to provide to the OCP cluster. This file is merged into
 # SECRETS_FILE.
+# The format is:
+#{
+#  "auths": {
+#    "<AUTH_PROVIDER>": {
+#      "auth": "<AUTH_TOKEN>",
+#      "email": "<AUTH_EMAIL>"
+#    },
+#    "<AUTH_PROVIDER_2>": {
+#      "auth": "<AUTH_TOKEN_2>",
+#      "email": "<AUTH_EMAIL_2>"
+#    }
+#  }
+#}
+
 AUTHS_FILE=~/ocs/rhceph-dev_auths.json
 
