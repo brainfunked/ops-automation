@@ -46,20 +46,18 @@
 # [0-9_-] to account for https://bugzilla.redhat.com/show_bug.cgi?id=1872680
 [mons]
 {% for host in groups['ceph_nodes'] %}
-{{ inventory_hostname }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
+{{ hostvars[host]['inventory_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
 {% endfor %}
 
 [osds]
 {% for host in groups['ceph_nodes'] %}
-{{ inventory_hostname }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
+{{ hostvars[host]['inventory_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
 {% endfor %}
 
 [mgrs]
 {% for host in groups['ceph_nodes'] %}
-{{ inventory_hostname }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
+{{ hostvars[host]['inventory_hostname'] }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
 {% endfor %}
 
 [grafana-server]
-{% for host in groups['ceph_nodes']|first %}
-{{ inventory_hostname }} ansible_host={{ hostvars[host]['ansible_fqdn'] }}
-{% endfor %}
+{{ hostvars[groups['ceph_nodes']|first]['inventory_hostname'] }} ansible_host={{ hostvars[groups['ceph_nodes']|first]['ansible_fqdn'] }}
