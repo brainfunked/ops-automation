@@ -7,10 +7,11 @@
 - hosts: ceph_all
   remote_user: root
   tasks:
-    - name: Enable firewalld on all hosts
-      shell: "systemctl daemon-reload && systemctl unmask firewalld.service"
-      args:
-        executable: /bin/bash
+    - name: Unmask firewalld on all hosts and reload daemons
+      systemd:
+        name: firewalld
+        masked: no
+        daemon_reload: yes
 
     - name: Install chrony config file for RH lab network
       copy:
@@ -21,7 +22,9 @@
         mode: '0644'
 
     - name: Restart chronyd
-      command: systemctl restart chronyd.service
+      systemd:
+        name: chronyd
+        state: restarted
 
 - hosts: ceph_ansible
   remote_user: root
