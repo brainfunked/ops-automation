@@ -88,6 +88,7 @@
 
 - name: Custom DNS configuration for the ceph cluster
   hosts: ceph_all
+  remote_user: root
   tasks:
     - name: dnf install dnsmasq
       dnf:
@@ -163,6 +164,7 @@
 
 - name: Custom DNS hostname setup
   hosts: ceph_nodes
+  remote_user: root
   tasks:
     - name: Change hostname on the cluster nodes
       hostname:
@@ -173,6 +175,7 @@
 
 - name: Validate custom DNS setup
   hosts: ceph_all
+  remote_user: root
   tasks:
     - name: Check resolv.conf
       debug:
