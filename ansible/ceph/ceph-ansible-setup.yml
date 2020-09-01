@@ -159,11 +159,16 @@
         state: restarted
 
     - name: Check FQDN DNS resolution
+      command: "host -t A {{ item }}.cephcluster"
+      with_inventory_hostnames:
+        - ceph_nodes
+
+    - name: Check FQDN DNS resolution connectivity
       command: "ping -c1 {{ item }}.cephcluster"
       with_inventory_hostnames:
         - ceph_nodes
 
-    - name: Check hostname-only DNS resolution
+    - name: Check hostname-only DNS resolution connectivity
       command: "ping -c1 {{ item }}"
       with_inventory_hostnames:
         - ceph_nodes
