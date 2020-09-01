@@ -177,13 +177,17 @@
   hosts: ceph_all
   remote_user: root
   tasks:
-    - name: Check resolv.conf
+    - name: Read resolv.conf content
+      command: grep '^[^#]' /etc/resolv.conf
+      register: resolv_conf
+
+    - name: resolv.conf
       debug:
-        msg: "{{ lookup('file', '/etc/resolv.conf') }}"
+        msg: "{{ resolv_conf.stdout_lines }}"
 
     - name: Check whether dnsmasq is running
       shell: >
-        ps auwfx | grep {{ lookup('file', '/var/run/NetworkManager/dnsmasq.pid') }} | grep -v grep
+        ps auwfx | grep $(</var/run/NetworkManager/dnsmasq.pid) | grep -v grep
       args:
         executable: /bin/bash
       register: dnsmasq_pid
