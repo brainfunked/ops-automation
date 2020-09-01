@@ -89,6 +89,20 @@
 - name: Custom DNS configuration for the ceph cluster
   hosts: ceph_all
   tasks:
+    - name: dnf install dnsmasq
+      dnf:
+        name:
+          - dnsmasq
+        state: present
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "8"
+
+    - name: yum install dnsmasq
+      yum:
+        name:
+          - dnsmasq
+        state: present
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['distribution_major_version'] == "7"
+
     - name: Debug hosts file render
       debug:
         msg: "{{ lookup('template', 'templates/hosts_ceph.j2') }}"
@@ -132,6 +146,12 @@
         owner: root
         group: root
         mode: '644'
+
+    - name: Manage the system interface using NetworkManager to allow DNS changes
+      lineinfile:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['interface'] }}"
+        regexp: '^NM_CONTROLLED='
+        line: NM_CONTROLLED=yes
 
     - name: Reload NetworkManager
       systemd:
