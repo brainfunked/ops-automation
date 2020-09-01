@@ -21,6 +21,10 @@
 - hosts: ceph_ansible
   remote_user: root
   tasks:
+    - name: Disable Ceph warning about too few PGs
+      command: >
+        ceph config set global mon_pg_warn_min_per_osd 1
+
     - name: Create ceph pool for ocs-operator external mode.
       command: >
         ceph osd pool create {{ ceph_pool_name }} {{ ceph_pool_pg_num }} {{ ceph_pool_pg_num }}
