@@ -1,0 +1,4 @@
+{% for host in groups['ceph_nodes'] %}
+address=/{{ hostvars[host]['inventory_hostname'] }}.cephcluster/{{ hostvars[host]['ansible_facts'][ceph_monitor_interface]['ipv4']['address'] }}
+address=/.{{ hostvars[host]['inventory_hostname'] }}.cephcluster/{{ hostvars[host]['ansible_facts'][ceph_monitor_interface]['ipv4']['address'] }}
+{% endfor %}

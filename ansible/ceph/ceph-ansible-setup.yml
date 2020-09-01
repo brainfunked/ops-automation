@@ -1,18 +1,10 @@
 ---
 # Installs ceph-ansible packages and configures the inventory.
-
-# Gather facts about all hosts just in case this playbook is run directly.
-# These facts are used to populate the configuration file templates.
+# If the custom-dns tag is used, also configures DNS resolution for the cluster
 
 - hosts: ceph_all
   remote_user: root
   tasks:
-    - name: Unmask firewalld on all hosts and reload daemons
-      systemd:
-        name: firewalld
-        masked: no
-        daemon_reload: yes
-
     - name: Install chrony config file for RH lab network
       copy:
         src: files/chrony.conf
@@ -25,6 +17,15 @@
       systemd:
         name: chronyd
         state: restarted
+
+- hosts: ceph_nodes
+  remote_user: root
+  tasks:
+    - name: Unmask firewalld on ceph nodes and reload daemons
+      systemd:
+        name: firewalld
+        masked: no
+        daemon_reload: yes
 
 - hosts: ceph_ansible
   remote_user: root
@@ -85,3 +86,77 @@
         path: /home/cephansible/ceph-ansible-keys
         state: directory
 
+- name: Custom DNS configuration for the ceph cluster
+  hosts: ceph_all
+  tasks:
+    - name: Debug hosts file render
+      debug:
+        msg: "{{ lookup('template', 'templates/hosts_ceph.j2') }}"
+
+    - name: Install hosts file
+      template:
+        src: templates/hosts_ceph.j2
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: '644'
+
+    - name: Ensure NetworkManager configuration directories exist
+      file:
+        path: "/etc/NetworkManager/{{ item }}"
+        state: directory
+      with_items:
+        - conf.d
+        - dnsmasq.d
+
+    - name: Debug dnsmasq file render
+      debug:
+        msg: "{{ lookup('template', 'templates/NetworkManager/dnsmasq.d/ceph.conf.j2') }}"
+
+    - name: Install NetworkManager dnsmasq configuration
+      template:
+        src: templates/NetworkManager/dnsmasq.d/ceph.conf.j2
+        dest: /etc/NetworkManager/dnsmasq.d/ceph.conf
+        owner: root
+        group: root
+        mode: '644'
+
+    - name: Debug NetworkManager file render
+      debug:
+        msg: "{{ lookup('template', 'templates/NetworkManager/conf.d/00-use-dnsmasq.conf.j2') }}"
+
+    - name: Configure NetworkManager to use dnsmasq
+      template:
+        src: templates/NetworkManager/conf.d/00-use-dnsmasq.conf.j2
+        dest: /etc/NetworkManager/conf.d/00-use-dnsmasq.conf
+        owner: root
+        group: root
+        mode: '644'
+
+    - name: Reload NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted
+
+    - name: Check FQDN DNS resolution
+      command: "ping -c1 {{ item }}.cephcluster"
+      with_inventory_hostnames:
+        - ceph_nodes
+
+    - name: Check hostname-only DNS resolution
+      command: "ping -c1 {{ item }}"
+      with_inventory_hostnames:
+        - ceph_nodes
+  tags:
+    - custom-dns
+    - never
+
+- name: Custom DNS hostname setup
+  hosts: ceph_nodes
+  tasks:
+    - name: Change hostname on the cluster nodes
+      hostname:
+        name: "{{ inventory_hostname }}.cephcluster"
+  tags:
+    - custom-dns
+    - never
