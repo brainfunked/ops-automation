@@ -205,7 +205,8 @@
 
     - name: FQDN DNS resolution
       debug:
-        msg: "{{ fqdn_resolution.stdout_lines }}"
+        msg: "{{ item.stdout_lines }}"
+      with_items: "{{ fqdn_resolution.results }}"
 
     - name: Check FQDN DNS resolution connectivity
       command: >
@@ -216,7 +217,8 @@
 
     - name: FQDN DNS resolution
       debug:
-        msg: "{{ fqdn_ping.stdout_lines }}"
+        msg: "{{ item.stdout_lines }}"
+      with_items: "{{ fqdn_ping.results }}"
 
     - name: Check hostname-only DNS resolution connectivity
       command: >
@@ -227,7 +229,8 @@
 
     - name: FQDN DNS resolution
       debug:
-        msg: "{{ hostname_ping.stdout_lines }}"
+        msg: "{{ item.stdout_lines }}"
+      with_items: "{{ hostname_ping.results }}"
   tags:
     - custom-dns
     - never
