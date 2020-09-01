@@ -157,21 +157,6 @@
       systemd:
         name: NetworkManager
         state: restarted
-
-    - name: Check FQDN DNS resolution
-      command: "host -t A {{ item }}.cephcluster"
-      with_inventory_hostnames:
-        - ceph_nodes
-
-    - name: Check FQDN DNS resolution connectivity
-      command: "ping -c1 {{ item }}.cephcluster"
-      with_inventory_hostnames:
-        - ceph_nodes
-
-    - name: Check hostname-only DNS resolution connectivity
-      command: "ping -c1 {{ item }}"
-      with_inventory_hostnames:
-        - ceph_nodes
   tags:
     - custom-dns
     - never
@@ -182,6 +167,60 @@
     - name: Change hostname on the cluster nodes
       hostname:
         name: "{{ inventory_hostname }}.cephcluster"
+  tags:
+    - custom-dns
+    - never
+
+- name: Validate custom DNS setup
+  hosts: ceph_all
+  tasks:
+    - name: Check resolv.conf
+      debug:
+        msg: "{{ lookup('file', '/etc/resolv.conf') }}"
+
+    - name: Check whether dnsmasq is running
+      shell: >
+        ps auwfx | grep {{ lookup('file', '/var/run/NetworkManager/dnsmasq.pid') }} | grep -v grep
+      args:
+        executable: /bin/bash
+      register: dnsmasq_pid
+
+    - name: dnsmasq process
+      debug:
+        msg: "{{ dnsmasq_pid.stdout_lines }}"
+
+    - name: Check FQDN DNS resolution
+      command: >
+        host -t A {{ item }}.cephcluster
+      register: fqdn_resolution
+      with_inventory_hostnames:
+        - ceph_nodes
+
+    - name: FQDN DNS resolution
+      debug:
+        msg: "{{ fqdn_resolution.stdout_lines }}"
+
+    - name: Check FQDN DNS resolution connectivity
+      command: >
+        ping -c1 {{ item }}.cephcluster
+      register: fqdn_ping
+      with_inventory_hostnames:
+        - ceph_nodes
+
+    - name: FQDN DNS resolution
+      debug:
+        msg: "{{ fqdn_ping.stdout_lines }}"
+
+    - name: Check hostname-only DNS resolution connectivity
+      command: >
+        ping -c1 {{ item }}
+      register: hostname_ping
+      with_inventory_hostnames:
+        - ceph_nodes
+
+    - name: FQDN DNS resolution
+      debug:
+        msg: "{{ hostname_ping.stdout_lines }}"
   tags:
     - custom-dns
     - never
