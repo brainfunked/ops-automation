@@ -13,10 +13,13 @@
 # already), and updates it to the latest version before running the deployment
 # script from that directory.
 
-# IMPORTANT: If auths.json file exists, it is merged with the cluster's
-# existing pull secret. This step is skipped if the file is not available. Put
-# any custom authentication tokens in a valid json file called auths.json with
-# the following template (use auths.json.template):
+# IMPORTANT: If the OCS_AUTHS_JSON environment variable is defined;
+# pointing to an exiting auths.json file that contains the .auths
+# object; it is merged with the cluster's existing pull secret. This
+# step is skipped if the environment variable is not defined or if
+# file is not available. Use the following template or modify the
+# auths.json.template and point the environment variable to it:
+#
 # {
 #   "auths": {
 #     "<AUTH_PROVIDER>": {
@@ -27,6 +30,17 @@
 # }
 
 set -e
+
+SCRIPT_DIR="$(dirname $(readlink -f $0))"
+
+if ! [[ -n $OSD_PROJECT_DIR && -d $OSD_PROJECT_DIR ]]
+then
+  echo "=== [ERROR] OSD_PROJECT_DIR environment variable must be defined and the directory must exist."
+  exit 254
+else
+  echo "=== Using '$OSD_PROJECT_DIR' as the project directory."
+  echo
+fi
 
 usage()
 {
@@ -105,31 +119,31 @@ echo
 echo "### Gathering the first cluster's name and id.."
 echo
 
-read -r OSD_CLUSTER_ID OSD_CLUSTER_NAME OSD_CLUSTER_STATE <<<$(ocm cluster list --columns id,name,state | tail -n +2 | tail -n 1)
+read -r CURRENT_CLUSTER_ID CURRENT_CLUSTER_NAME CURRENT_CLUSTER_STATE <<<$(ocm list cluster --columns id,name,state | tail -n +2 | tail -n 1)
 
-if [[ -z $OSD_CLUSTER_ID ]]
+if [[ -z $CURRENT_CLUSTER_ID ]]
 then
   echo "- [ERROR] No cluster found."
   exit 3
 fi
 
-echo "$OSD_CLUSTER_ID" > cluster_id
-echo "$OSD_CLUSTER_NAME" > cluster_name
+echo "$CURRENT_CLUSTER_ID" > "$OSD_PROJECT_DIR/cluster_id"
+echo "$CURRENT_CLUSTER_NAME" > "$OSD_PROJECT_DIR/cluster_name"
 
-echo "ID: $OSD_CLUSTER_ID"
-echo "NAME: $OSD_CLUSTER_NAME"
+echo "ID: $CURRENT_CLUSTER_ID"
+echo "NAME: $CURRENT_CLUSTER_NAME"
 
 echo
 echo "### Checking (and waiting) for the cluster to be ready.."
 echo
 
-if [[ $OSD_CLUSTER_STATE != ready ]]
+if [[ $CURRENT_CLUSTER_STATE != ready ]]
 then
   # Check for the state to be "installing"
   echo "- Cluster is not ready. Checking for ongoing installation.."
   while
-    OSD_CLUSTER_STATE=$(ocm cluster status $OSD_CLUSTER_ID | awk '$1 == "State:" { print $2 }')
-    if [[ $OSD_CLUSTER_STATE != installing ]]
+    CURRENT_CLUSTER_STATE=$(ocm cluster status $CURRENT_CLUSTER_ID | awk '$1 == "State:" { print $2 }')
+    if [[ $CURRENT_CLUSTER_STATE != installing ]]
     then
       break
     fi
@@ -141,26 +155,53 @@ then
   echo "done!"
 
   # Once installation is finished, check that the cluster is actually ready
-  if [[ $OSD_CLUSTER_STATE != ready ]]
+  if [[ $CURRENT_CLUSTER_STATE != ready ]]
   then
-    echo "- [ERROR] Cluster $OSD_CLUSTER_NAME state: $OSD_CLUSTER_STATE."
+    echo "- [ERROR] Cluster $CURRENT_CLUSTER_NAME state: $CURRENT_CLUSTER_STATE."
     exit 4
   fi
 else
-  echo "- Cluster $OSD_CLUSTER_NAME is ready!"
+  echo "- Cluster $CURRENT_CLUSTER_NAME is ready!"
 fi
 
 echo
 echo "### Storing cluster's access credentials.."
 echo
 
-OSD_API_CREDENTIALS_ENDPOINT="/api/clusters_mgmt/v1/clusters/$OSD_CLUSTER_ID/credentials"
-ocm get "$OSD_API_CREDENTIALS_ENDPOINT" | jq -r .kubeconfig > kubeconfig
-echo "- kubeconfig: $PWD/kubeconfig"
-ocm get "$OSD_API_CREDENTIALS_ENDPOINT" | jq -r .admin > admin
-echo "- kubeadmin credentials: $PWD/admin"
+CLUSTER_DIR="$OSD_PROJECT_DIR/$CURRENT_CLUSTER_ID"
+CLUSTER_AUTH_DIR="$CLUSTER_DIR/auth"
+CLUSTER_KUBECONFIG="$CLUSTER_AUTH_DIR/kubeconfig"
+CLUSTER_KUBEADMIN="$CLUSTER_AUTH_DIR/kubeadmin-password"
 
-export KUBECONFIG="$PWD/kubeconfig"
+echo "- Creating the cluster directory."
+mkdir -pv "$CLUSTER_AUTH_DIR" "$CLUSTER_DIR/logs"
+
+OSD_API_CREDENTIALS_ENDPOINT="/api/clusters_mgmt/v1/clusters/$CURRENT_CLUSTER_ID/credentials"
+ocm get "$OSD_API_CREDENTIALS_ENDPOINT" | jq -r .kubeconfig > "$CLUSTER_KUBECONFIG"
+echo "- kubeconfig: $CLUSTER_KUBECONFIG"
+ocm get "$OSD_API_CREDENTIALS_ENDPOINT" | jq -r .admin.password > "$CLUSTER_KUBEADMIN"
+echo "- kubeadmin credentials: $CLUSTER_KUBEADMIN"
+
+CLUSTER_SYMLINK="$OSD_PROJECT_DIR/latest"
+
+echo "- Setting up the latest symlink at '$CLUSTER_SYMLINK'."
+if [[ -L $CLUSTER_SYMLINK ]]
+then
+  echo "- '$CLUSTER_SYMLINK' exists and is a symlink. Deleting it."
+  rm -v "$CLUSTER_SYMLINK"
+fi
+
+if ! [[ -e $CLUSTER_SYMLINK ]]
+then
+  echo "- '$CLUSTER_SYMLINK' doesn't exist. Creating it."
+  pushd "$OSD_PROJECT_DIR"
+  ln -sv "$CURRENT_CLUSTER_ID" latest
+  popd
+else
+  echo "- '$CLUSTER_SYMLINK' exists and is not a symlink. Skipping."
+fi
+
+export KUBECONFIG="$CLUSTER_KUBECONFIG"
 
 echo
 echo "### Checking authentication.."
@@ -179,29 +220,30 @@ echo
 echo "### Updating the cluster pull secret if applicable.."
 echo
 
-if [[ -s auths.json ]]
+CLUSTER_PULL_SECRET_OUTPUT="$CLUSTER_DIR/pull-secret.json"
+CLUSTER_SECRETS_JSON="$CLUSTER_AUTH_DIR/secret.json"
+
+if [[ -n $OCS_AUTHS_JSON && -s $OCS_AUTHS_JSON ]]
 then
-  echo "- auths.json file exists, checking for existing pull-secret json file."
-  PULL_SECRET_OUTPUT="pull-secret_${OSD_CLUSTER_ID}.json"
-  if [[ -s $PULL_SECRET_OUTPUT && $(jq 'has("auths")' <"$PULL_SECRET_OUTPUT") == true ]]
+  echo "- auths.json file exists at $OCS_AUTHS_JSON, checking for existing pull-secret json file."
+  if [[ -s $CLUSTER_PULL_SECRET_OUTPUT && $(jq 'has("auths")' <"$CLUSTER_PULL_SECRET_OUTPUT") == true ]]
   then
-    echo "- ${PULL_SECRET_OUTPUT} exists and contains .auths object."
+    echo "- ${CLUSTER_PULL_SECRET_OUTPUT} exists and contains .auths object."
     echo "- Not updating pull secret."
   else
-    echo "- ${PULL_SECRET_OUTPUT} either doesn't exist or contain .auths object."
-    if [[ $(jq 'has("auths")' <auths.json) == true ]]
+    echo "- ${CLUSTER_PULL_SECRET_OUTPUT} either doesn't exist or contain .auths object."
+    if [[ $(jq 'has("auths")' <$OCS_AUTHS_JSON) == true ]]
     then
       echo "- auths.json contains .auths object."
       echo "- Fetching existing pull secrets.."
-      oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq > secret.json
+      oc get -n openshift-config secret/pull-secret -ojson | jq -r '.data.".dockerconfigjson"' | base64 -d | jq > "$CLUSTER_SECRETS_JSON"
       echo "- Merging auths.json into secret.json.."
-      jq -s '.[0] * .[1]' secret.json auths.json > "$PULL_SECRET_OUTPUT"
+      jq -s '.[0] * .[1]' $CLUSTER_SECRETS_JSON $OCS_AUTHS_JSON > "$CLUSTER_PULL_SECRET_OUTPUT"
       echo "- Updating pull-secret on the cluster.."
-      oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="$PULL_SECRET_OUTPUT"
+      oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson="$CLUSTER_PULL_SECRET_OUTPUT"
       echo
-      echo -n "- $(date +'%k:%M'): Waiting 20 minutes for the cluster to propagate the pull secret.. "
-      show_spinner_and_sleep 1200
-      echo "done!"
+      echo "=== It may take around 20 minutes for the cluster to propagate the pull secret."
+      echo
     fi
   fi
 else
@@ -209,18 +251,14 @@ else
 fi
 
 echo
-echo "### Installing community operators.."
+echo "### OCS can now be deployed as an addon."
 echo
 
-oc apply -f 'https://raw.githubusercontent.com/JohnStrunk/ocp-rook-ceph/master/community-operators.yaml'
-echo
-echo "- Waiting for community-operators deployment to be available."
-oc wait deployment/community-operators -n openshift-marketplace --for condition=available
-echo "- Community operators installed."
-
-echo
-echo "### Labeling nodes for OCS.."
-echo
-
-oc label no -lnode-role.kubernetes.io/worker cluster.ocs.openshift.io/openshift-storage=""
+ENVRC_FILE="$SCRIPT_DIR/envrc"
+if [[ -s $ENVRC_FILE ]]
+then
+  echo "- Source the $ENVRC_FILE to setup the environment before proceeding."
+  echo
+  echo
+fi
 
