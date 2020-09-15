@@ -31,7 +31,11 @@
 
 set -e
 
+# Absolute path to this script's directory.
 SCRIPT_DIR="$(dirname $(readlink -f $0))"
+
+# Load configuration. This assumes that it is collocated with this script.
+source "$SCRIPT_DIR/deploy_ocs_on_osd.conf"
 
 if ! [[ -n $OSD_PROJECT_DIR && -d $OSD_PROJECT_DIR ]]
 then
@@ -257,7 +261,10 @@ echo
 ENVRC_FILE="$SCRIPT_DIR/envrc"
 if [[ -s $ENVRC_FILE ]]
 then
-  echo "- Source the $ENVRC_FILE to setup the environment before proceeding."
+  echo "- Sourcing the $ENVRC_FILE to setup the environment."
+  source "$ENVRC_FILE"
+  echo
+  echo "=== Done."
   echo
   echo
 fi
