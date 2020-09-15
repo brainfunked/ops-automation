@@ -5,6 +5,7 @@ export OSD_CLUSTER_NAME=$(<$OSD_PROJECT_DIR/cluster_name)
 export OSD_CLUSTER_ID=$(<$OSD_PROJECT_DIR/cluster_id)
 export OSDE2E_ARTIFACTS="${OSD_PROJECT_DIR}/artifacts/$(date +%F_%T)"
 export KUBECONFIG="${OSD_PROJECT_DIR}/latest/auth/kubeconfig"
+export TEST_KUBECONFIG="$KUBECONFIG"
 export OCS_AUTHS_JSON="${OSD_PROJECT_DIR}/auths.json"
 export OCS_ADDON_TEST_HARNESS_TAG="0.01"
 export OCS_ADDON_TEST_HARNESS="quay.io/mkarnikredhat/ocs-operator-osde2e-test-harness"
