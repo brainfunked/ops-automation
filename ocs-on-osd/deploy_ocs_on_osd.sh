@@ -2,17 +2,14 @@
 
 # Run this script after starting the creation of a cluster from OSD dashboard.
 # This script assumes that there is only one cluster and explicitly works only
-# on the first cluster output from `ocm cluster list`.
+# on the last (presumably the latest) cluster output from `ocm list clusters`.
+# The cluster name is expected to contain the username output from `ocm whoami`
+# in full.
 
 # The script is largely idempotent. Steps already completed should be skipped.
 # If the script fails before completion due to timeouts and such, just run it
 # again and it should resume.
-
-# Ensure that ocm and oc are in $PATH. The script clones
-# https://github.com/JohnStrunk/ocp-rook-ceph into a subdirectory (if it isn't
-# already), and updates it to the latest version before running the deployment
-# script from that directory.
-
+#
 # IMPORTANT: If the OCS_AUTHS_JSON environment variable is defined;
 # pointing to an exiting auths.json file that contains the .auths
 # object; it is merged with the cluster's existing pull secret. This
@@ -120,10 +117,19 @@ then
 fi
 
 echo
-echo "### Gathering the first cluster's name and id.."
+echo "### Gathering the last cluster's name and id.."
 echo
 
-read -r CURRENT_CLUSTER_ID CURRENT_CLUSTER_NAME CURRENT_CLUSTER_STATE <<<$(ocm list cluster --columns id,name,state | tail -n +2 | tail -n 1)
+OCM_USER=$(ocm whoami | jq .username -r -M)
+
+echo "Using the latest cluster matching username '$OCM_USER'."
+
+read -r CURRENT_CLUSTER_ID CURRENT_CLUSTER_NAME CURRENT_CLUSTER_STATE <<<$(\
+  ocm list cluster \
+    --columns id,name,state \
+    --parameter search="name like '%${OCM_USER}%'" \
+  | tail -n +2 | tail -n 1\
+)
 
 if [[ -z $CURRENT_CLUSTER_ID ]]
 then
