@@ -120,16 +120,16 @@ echo
 echo "### Gathering the last cluster's name and id.."
 echo
 
-OCM_USER=$(ocm whoami | jq .username -r -M)
+OCM_USER="$(ocm whoami | jq .username -r -M)"
 
 echo "Using the latest cluster matching username '$OCM_USER'."
 
-read -r CURRENT_CLUSTER_ID CURRENT_CLUSTER_NAME CURRENT_CLUSTER_STATE <<<$(\
+read -r CURRENT_CLUSTER_ID CURRENT_CLUSTER_NAME CURRENT_CLUSTER_STATE <<<"$(\
   ocm list cluster \
     --columns id,name,state \
     --parameter search="name like '%${OCM_USER}%'" \
   | tail -n +2 | tail -n 1\
-)
+)"
 
 if [[ -z $CURRENT_CLUSTER_ID ]]
 then
@@ -152,7 +152,7 @@ then
   # Check for the state to be "installing"
   echo "- Cluster is not ready. Checking for ongoing installation.."
   while
-    CURRENT_CLUSTER_STATE=$(ocm cluster status $CURRENT_CLUSTER_ID | awk '$1 == "State:" { print $2 }')
+    CURRENT_CLUSTER_STATE="$(ocm cluster status $CURRENT_CLUSTER_ID | awk '$1 == "State:" { print $2 }')"
     if [[ $CURRENT_CLUSTER_STATE != installing ]]
     then
       break
